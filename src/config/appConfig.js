@@ -3,6 +3,9 @@
  * Import from here across the app — do not hardcode colors/text in components.
  */
 
+import headerImage from '@/assets/images/header.jpg'
+import logoImage from '@/assets/images/logo.png'
+
 export const theme = {
   colors: {
     ink: '#14231c',
@@ -66,7 +69,10 @@ export const site = {
   society: 'The Madresah Tayebiyah Society',
   url: 'https://kolkatamadresah.com',
   contactEmail: 'madresah@sgjskolkata.com',
-  headerImage: 'https://kolkatamadresah.com/img/header.jpg',
+  // Local assets (downloaded from main/admin sites)
+  headerImage,
+  logoImage,
+  favicon: '/favicon.ico',
   studentLogin: 'https://kolkatamadresah.com/new_mis/student/student_login.php',
   admissionForm:
     'https://docs.google.com/forms/d/e/1FAIpQLScgI09Fx9KKkyMGv_LDV-nIjvZC3gBpY_Y5DkoDg3P8rxqCPQ/viewform',
@@ -119,8 +125,11 @@ export const content = {
     passwordLabel: 'Password',
     passwordPlaceholder: 'Enter password',
     submitLabel: 'Login',
+    loadingLabel: 'Signing in…',
     emptyError: 'Please enter username and password.',
-    apiPendingError: 'Login API not connected yet. Frontend UI only for now.',
+    invalidError: 'Incorrect username or password.',
+    adminOnlyError: 'This portal is for administrators only.',
+    networkError: 'Unable to reach the login server. Please try again.',
   },
 
   about: {

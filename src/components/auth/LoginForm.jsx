@@ -6,6 +6,7 @@ export default function LoginForm({
   username,
   password,
   error,
+  loading = false,
   onUsernameChange,
   onPasswordChange,
   onSubmit,
@@ -31,6 +32,7 @@ export default function LoginForm({
             value={username}
             onChange={(e) => onUsernameChange(e.target.value)}
             placeholder={copy.usernamePlaceholder}
+            disabled={loading}
           />
         </label>
 
@@ -44,6 +46,7 @@ export default function LoginForm({
               value={password}
               onChange={(e) => onPasswordChange(e.target.value)}
               placeholder={copy.passwordPlaceholder}
+              disabled={loading}
             />
             <button
               type="button"
@@ -51,6 +54,7 @@ export default function LoginForm({
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
               title={showPassword ? 'Hide password' : 'Show password'}
+              disabled={loading}
             >
               {showPassword ? <EyeOpenIcon /> : <EyeOffIcon />}
             </button>
@@ -59,8 +63,8 @@ export default function LoginForm({
 
         {error ? <p className="login-form__error">{error}</p> : null}
 
-        <button type="submit" className="login-form__submit">
-          {copy.submitLabel}
+        <button type="submit" className="login-form__submit" disabled={loading}>
+          {loading ? copy.loadingLabel : copy.submitLabel}
         </button>
       </form>
 
