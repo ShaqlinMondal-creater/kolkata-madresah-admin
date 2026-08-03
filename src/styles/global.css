@@ -1,0 +1,59 @@
+:root {
+  /* fallback values — override by applyTheme() from config/appConfig.js */
+  --ink: #14231c;
+  --ink-soft: #3d5348;
+  --paper: #f7f3ea;
+  --paper-soft: #fffdf8;
+  --paper-deep: #efe8d8;
+  --panel: #0f2a22;
+  --panel-2: #16382e;
+  --gold: #c4a35a;
+  --gold-soft: #e4cf95;
+  --gold-deep: #6f5620;
+  --gold-muted: #8a6d2c;
+  --line: rgba(196, 163, 90, 0.35);
+  --white: #ffffff;
+  --danger: #b42318;
+  --danger-text: #8a241c;
+  --danger-bg: rgba(180, 35, 24, 0.06);
+  --danger-border: rgba(180, 35, 24, 0.18);
+  --error-soft: #ffb4a9;
+  --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --font-body: 'Outfit', 'Segoe UI', sans-serif;
+
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--font-body);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  height: 100svh;
+  overflow: hidden;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input {
+  font: inherit;
+}
