@@ -329,7 +329,7 @@ export default function FeesManagementPage() {
     showComingSoon(`Export PDF for ${count} fee payment(s) is coming soon.`)
   }
 
-  const colSpan = 13
+  const colSpan = 12
 
   return (
     <section className="module-page fees-page">
@@ -503,7 +503,6 @@ export default function FeesManagementPage() {
                   disabled={!pageIds.length || loading}
                 />
               </th>
-              <th>SN</th>
               <th>Name</th>
               <th>Roll no</th>
               <th>Class</th>
@@ -557,7 +556,6 @@ export default function FeesManagementPage() {
                         }}
                       />
                     </td>
-                    <td>{row.sn}</td>
                     <td>
                       <div className="fees-table__name">
                         <strong>{row.name || '—'}</strong>
