@@ -9,10 +9,11 @@ async function parseJson(response) {
   }
 }
 
-export async function getClassesByYear(ayId, term = '') {
+export async function getClassesByYear(ayId, term = '', options = {}) {
   const params = new URLSearchParams()
   if (ayId) params.set('ay_id', String(ayId))
   if (term) params.set('term', term)
+  if (options.includeStudentCount) params.set('include_student_count', '1')
 
   const query = params.toString()
   const response = await fetch(
