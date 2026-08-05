@@ -63,3 +63,34 @@ export async function getStudentsList(filters = {}) {
 
   return parseJson(response)
 }
+
+export async function getStudentDetails(stId) {
+  const response = await fetch(`${API_BASE_URL}/students/details.php`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ st_id: Number(stId) }),
+  })
+  return parseJson(response)
+}
+
+/** Admin inline edit — single field on student / parents / address */
+export async function updateStudentField(stId, field, value) {
+  const response = await fetch(`${API_BASE_URL}/students/update.php`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({
+      st_id: Number(stId),
+      field,
+      value: value ?? '',
+    }),
+  })
+  return parseJson(response)
+}

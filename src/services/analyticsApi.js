@@ -10,16 +10,17 @@ async function parseJson(response) {
 }
 
 export async function getDashboardStats(ayId) {
-  const params = new URLSearchParams()
-  if (ayId) params.set('ay_id', String(ayId))
+  const body = {}
+  if (ayId) body.ay_id = Number(ayId)
 
-  const query = params.toString()
-  const url = `${API_BASE_URL}/analytics/dashboard.php${query ? `?${query}` : ''}`
-
-  const response = await fetch(url, {
-    method: 'GET',
+  const response = await fetch(`${API_BASE_URL}/analytics/dashboard.php`, {
+    method: 'POST',
     credentials: 'include',
-    headers: { Accept: 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(body),
   })
 
   return parseJson(response)

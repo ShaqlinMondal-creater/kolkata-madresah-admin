@@ -10,19 +10,17 @@ async function parseJson(response) {
 }
 
 /**
- * Fee plans by academic year.
- * Tries flat path first, then nested path (both are the same API).
+ * Fee plans by academic year (POST).
+ * Tries nested path first, then flat alias.
  */
 export async function getFeePlansByYear(ayId, term = '') {
-  const params = new URLSearchParams()
-  if (ayId) params.set('ay_id', String(ayId))
-  if (term) params.set('term', term)
-  const query = params.toString()
-  const qs = query ? `?${query}` : ''
+  const body = {}
+  if (ayId) body.ay_id = Number(ayId)
+  if (term) body.term = term
 
   const urls = [
-    `${API_BASE_URL}/fees/plans/list.php${qs}`,
-    `${API_BASE_URL}/fees/plans_list.php${qs}`,
+    `${API_BASE_URL}/fees/plans/list.php`,
+    `${API_BASE_URL}/fees/plans_list.php`,
   ]
 
   let lastError = 'Could not load fee plans.'
@@ -30,18 +28,21 @@ export async function getFeePlansByYear(ayId, term = '') {
   for (const url of urls) {
     try {
       const response = await fetch(url, {
-        method: 'GET',
+        method: 'POST',
         credentials: 'include',
-        headers: { Accept: 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(body),
       })
       const data = await parseJson(response)
 
       if (!data || typeof data !== 'object') {
-        lastError = `Invalid response from ${url} (HTTP ${response.status}). Re-upload the PHP file.`
+        lastError = `Invalid response from fee plans API (HTTP ${response.status}).`
         continue
       }
 
-      // Valid API payload — return even if not 200 (UI shows message)
       if (data.status != null) {
         if (!data.message) {
           data.message =

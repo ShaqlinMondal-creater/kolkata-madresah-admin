@@ -37,9 +37,13 @@ export async function logoutRequest() {
 
 export async function getProfileRequest() {
   const response = await fetch(`${API_BASE_URL}/auth/profile.php`, {
-    method: 'GET',
+    method: 'POST',
     credentials: 'include',
-    headers: { Accept: 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({}),
   })
   return parseJson(response)
 }

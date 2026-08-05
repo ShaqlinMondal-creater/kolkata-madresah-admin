@@ -7,3 +7,6 @@ export const API_BASE_URL =
 
 /** Admin panel userlevel — same string as old _admin/userlevel.php */
 export const ADMIN_USERLEVEL = 'sadmin_df56fdg'
+
+/** Student panel userlevel — same string as old _student/userlevel.php */
+export const STUDENT_USERLEVEL = 'student_JDVjb4651dfs5'

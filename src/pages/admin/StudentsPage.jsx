@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
 import Button from '@mui/material/Button'
@@ -20,12 +21,14 @@ import MoreVertIcon from '@mui/icons-material/MoreVert'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import UpgradeOutlinedIcon from '@mui/icons-material/UpgradeOutlined'
+import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined'
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
 import RequestQuoteOutlinedIcon from '@mui/icons-material/RequestQuoteOutlined'
 import { getAcademicYears } from '@/services/academicYearApi'
 import { getClassesByYear } from '@/services/classesApi'
 import { getStudentsList } from '@/services/studentsApi'
 import ClassMultiSelect from '@/components/forms/ClassMultiSelect'
+import { useSwitchToStudent } from '@/hooks/useSwitchToStudent'
 
 const defaultFilters = {
   search: '',
@@ -101,7 +104,18 @@ function StudentRowMenu({ student, onAction }) {
           <ListItemIcon>
             <VisibilityOutlinedIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>View</ListItemText>
+          <ListItemText>View details</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null)
+            onAction('switch', student)
+          }}
+        >
+          <ListItemIcon>
+            <SwapHorizOutlinedIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Switch</ListItemText>
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -131,6 +145,8 @@ function StudentRowMenu({ student, onAction }) {
 }
 
 export default function StudentsPage() {
+  const navigate = useNavigate()
+  const { switching, doSwitch } = useSwitchToStudent()
   const [years, setYears] = useState([])
   const [classes, setClasses] = useState([])
   const [filters, setFilters] = useState(defaultFilters)
@@ -324,10 +340,22 @@ export default function StudentsPage() {
     )
   }
 
-  function onRowAction(action, student) {
+  async function onRowAction(action, student) {
+    if (action === 'view') {
+      navigate(`/students/${student.st_id}`)
+      return
+    }
+    if (action === 'switch') {
+      const ok = await doSwitch(student.st_id)
+      if (!ok) {
+        showComingSoon(
+          `Could not switch to “${student.name || student.st_id}”. Check Switch API upload.`,
+        )
+      }
+      return
+    }
     const name = student.name || `student #${student.st_id}`
     const labels = {
-      view: `View “${name}” is coming soon.`,
       edit: `Edit “${name}” is coming soon.`,
       upgrade: `Upgrade “${name}” is coming soon.`,
     }
@@ -634,7 +662,13 @@ export default function StudentsPage() {
                     <td>{st.sn}</td>
                     <td>
                       <div className="students-table__name">
-                        <strong>{st.name || '—'}</strong>
+                        <button
+                          type="button"
+                          className="students-table__name-btn"
+                          onClick={() => navigate(`/students/${st.st_id}`)}
+                        >
+                          <strong>{st.name || '—'}</strong>
+                        </button>
                         {st.its_id ? <span>ITS {st.its_id}</span> : null}
                       </div>
                     </td>

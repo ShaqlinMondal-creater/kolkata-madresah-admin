@@ -3,6 +3,7 @@ import { content, site } from '@/config/appConfig'
 import { EyeOffIcon, EyeOpenIcon } from '@/components/icons/EyeIcons'
 
 export default function LoginForm({
+  mode = 'admin',
   username,
   password,
   error,
@@ -10,12 +11,14 @@ export default function LoginForm({
   onUsernameChange,
   onPasswordChange,
   onSubmit,
+  onSwitchMode,
 }) {
   const [showPassword, setShowPassword] = useState(false)
-  const copy = content.login
+  const isStudent = mode === 'student'
+  const copy = isStudent ? content.studentLogin : content.login
 
   return (
-    <div className="login-form">
+    <div className={`login-form${isStudent ? ' login-form--student' : ''}`}>
       <div className="login-form__head">
         <p className="login-form__eyebrow">{copy.eyebrow}</p>
         <h2 className="login-form__title">{copy.title}</h2>
@@ -27,7 +30,7 @@ export default function LoginForm({
           <span>{copy.usernameLabel}</span>
           <input
             type="text"
-            name="username"
+            name={isStudent ? 'roll_no' : 'username'}
             autoComplete="username"
             value={username}
             onChange={(e) => onUsernameChange(e.target.value)}
@@ -63,10 +66,28 @@ export default function LoginForm({
 
         {error ? <p className="login-form__error">{error}</p> : null}
 
-        <button type="submit" className="login-form__submit" disabled={loading}>
+        <button
+          type="submit"
+          className={`login-form__submit${isStudent ? ' login-form__submit--student' : ''}`}
+          disabled={loading}
+        >
           {loading ? copy.loadingLabel : copy.submitLabel}
         </button>
       </form>
+
+      {typeof onSwitchMode === 'function' ? (
+        <p className="login-form__switch">
+          {isStudent ? (
+            <button type="button" onClick={() => onSwitchMode('admin')}>
+              {content.login.switchToAdmin}
+            </button>
+          ) : (
+            <button type="button" onClick={() => onSwitchMode('student')}>
+              {content.login.switchToStudent}
+            </button>
+          )}
+        </p>
+      ) : null}
 
       <p className="login-form__footer">
         <a href={site.url} target="_blank" rel="noreferrer">

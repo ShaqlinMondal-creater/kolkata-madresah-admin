@@ -10,19 +10,19 @@ async function parseJson(response) {
 }
 
 export async function getClassesByYear(ayId, term = '', options = {}) {
-  const params = new URLSearchParams()
-  if (ayId) params.set('ay_id', String(ayId))
-  if (term) params.set('term', term)
-  if (options.includeStudentCount) params.set('include_student_count', '1')
+  const body = {}
+  if (ayId) body.ay_id = Number(ayId)
+  if (term) body.term = term
+  if (options.includeStudentCount) body.include_student_count = 1
 
-  const query = params.toString()
-  const response = await fetch(
-    `${API_BASE_URL}/classes/list.php${query ? `?${query}` : ''}`,
-    {
-      method: 'GET',
-      credentials: 'include',
-      headers: { Accept: 'application/json' },
+  const response = await fetch(`${API_BASE_URL}/classes/list.php`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
     },
-  )
+    body: JSON.stringify(body),
+  })
   return parseJson(response)
 }

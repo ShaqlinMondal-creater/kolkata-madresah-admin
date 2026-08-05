@@ -3,21 +3,31 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import BrandPanel from '@/components/brand/BrandPanel'
 import LoginForm from '@/components/auth/LoginForm'
 import { content } from '@/config/appConfig'
-import { ADMIN_USERLEVEL } from '@/config/apiConfig'
+import { ADMIN_USERLEVEL, STUDENT_USERLEVEL } from '@/config/apiConfig'
 import { loginRequest } from '@/services/authApi'
 import { getAuthUser, setAuthUser, clearAuthUser } from '@/auth/authStorage'
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const existing = getAuthUser()
+  const [mode, setMode] = useState('admin') // admin | student
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const copy = content.login
 
   if (existing?.userlevel === ADMIN_USERLEVEL) {
     return <Navigate to="/dashboard" replace />
+  }
+  if (existing?.userlevel === STUDENT_USERLEVEL) {
+    return <Navigate to="/student" replace />
+  }
+
+  function switchMode(next) {
+    setMode(next)
+    setError('')
+    setUsername('')
+    setPassword('')
   }
 
   async function handleSubmit(e) {
@@ -25,6 +35,9 @@ export default function LoginPage() {
     setError('')
 
     const user = username.trim()
+    const isStudent = mode === 'student'
+    const copy = isStudent ? content.studentLogin : content.login
+
     if (!user || !password.trim()) {
       setError(copy.emptyError)
       return
@@ -40,10 +53,28 @@ export default function LoginPage() {
         return
       }
 
-      // This React portal is admin-only (same gate as old _admin/userlevel.php)
+      if (isStudent) {
+        if (response.data.userlevel !== STUDENT_USERLEVEL) {
+          clearAuthUser()
+          setError(copy.studentOnlyError)
+          return
+        }
+
+        setAuthUser({
+          username: response.data.username,
+          st_id: response.data.st_id,
+          role: response.data.role || 'student',
+          userlevel: response.data.userlevel,
+          type: 'student',
+          switched: false,
+        })
+        navigate('/student', { replace: true })
+        return
+      }
+
       if (response.data.userlevel !== ADMIN_USERLEVEL) {
         clearAuthUser()
-        setError(copy.adminOnlyError)
+        setError(content.login.adminOnlyError)
         return
       }
 
@@ -56,20 +87,37 @@ export default function LoginPage() {
       navigate('/dashboard', { replace: true })
     } catch {
       clearAuthUser()
-      setError(copy.networkError)
+      setError(
+        isStudent
+          ? content.studentLogin.networkError
+          : content.login.networkError,
+      )
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="login-layout">
+    <div
+      className={`login-layout${mode === 'student' ? ' is-student' : ' is-admin'}`}
+    >
       <section className="login-layout__brand" aria-label="Kolkata Madresah">
-        <BrandPanel />
+        <div className="login-brand-stage" aria-hidden={false}>
+          <div className="login-brand-stage__panel login-brand-stage__panel--admin">
+            <BrandPanel variant="admin" />
+          </div>
+          <div className="login-brand-stage__panel login-brand-stage__panel--student">
+            <BrandPanel variant="student" />
+          </div>
+        </div>
       </section>
 
-      <aside className="login-layout__auth" aria-label="Admin login">
+      <aside
+        className="login-layout__auth"
+        aria-label={mode === 'student' ? 'Student login' : 'Admin login'}
+      >
         <LoginForm
+          mode={mode}
           username={username}
           password={password}
           error={error}
@@ -77,6 +125,7 @@ export default function LoginPage() {
           onUsernameChange={setUsername}
           onPasswordChange={setPassword}
           onSubmit={handleSubmit}
+          onSwitchMode={switchMode}
         />
       </aside>
     </div>

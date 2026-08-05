@@ -11,16 +11,14 @@ async function parseJson(response) {
 
 /** Season / academic-year list for filters */
 export async function getAcademicYears(term = '') {
-  const params = new URLSearchParams()
-  if (term) params.set('term', term)
-
-  const query = params.toString()
-  const url = `${API_BASE_URL}/academic-year/list.php${query ? `?${query}` : ''}`
-
-  const response = await fetch(url, {
-    method: 'GET',
+  const response = await fetch(`${API_BASE_URL}/academic-year/list.php`, {
+    method: 'POST',
     credentials: 'include',
-    headers: { Accept: 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(term ? { term } : {}),
   })
 
   return parseJson(response)
