@@ -1,9 +1,10 @@
 import { API_BASE_URL } from '@/config/apiConfig'
+import { parseJson as parseJsonStrict } from '@/services/apiClient'
+import { buildStudentsPayload } from '@/services/studentsApi'
 
 async function parseJson(response) {
-  const text = await response.text()
   try {
-    return text ? JSON.parse(text) : null
+    return await parseJsonStrict(response)
   } catch {
     return null
   }
@@ -65,4 +66,74 @@ export async function getFeePlansByYear(ayId, term = '') {
     message: lastError,
     data: { plans: [] },
   }
+}
+
+/** Apply fee plan to selected students or filtered list */
+export async function applyFeePlan({ stIds = [], filters = null, fpId }) {
+  const body = {
+    fp_id: Number(fpId),
+  }
+  const ids = Array.isArray(stIds)
+    ? stIds.map(Number).filter((id) => id > 0)
+    : []
+  if (ids.length) {
+    body.st_ids = ids
+  } else if (filters) {
+    const { page, perpage, ...rest } = filters
+    body.filters = buildStudentsPayload(rest)
+  }
+
+  const response = await fetch(`${API_BASE_URL}/fees/apply_plan.php`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+  return parseJsonStrict(response)
+}
+
+/** Create fee plan for an academic year */
+export async function createFeePlan(payload) {
+  const response = await fetch(`${API_BASE_URL}/fees/plans/create.php`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({
+      ay_id: Number(payload.ay_id),
+      fp_name: payload.fp_name,
+      fp_type: payload.fp_type,
+      cg_ids: Array.isArray(payload.cg_ids)
+        ? payload.cg_ids.map(Number).filter((id) => id > 0)
+        : [],
+    }),
+  })
+  return parseJsonStrict(response)
+}
+
+/** Update existing fee plan */
+export async function updateFeePlan(payload) {
+  const response = await fetch(`${API_BASE_URL}/fees/plans/update.php`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({
+      fp_id: Number(payload.fp_id),
+      ay_id: payload.ay_id ? Number(payload.ay_id) : undefined,
+      fp_name: payload.fp_name,
+      fp_type: payload.fp_type,
+      cg_ids: Array.isArray(payload.cg_ids)
+        ? payload.cg_ids.map(Number).filter((id) => id > 0)
+        : [],
+    }),
+  })
+  return parseJsonStrict(response)
 }

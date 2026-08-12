@@ -21,6 +21,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import UpgradeOutlinedIcon from '@mui/icons-material/UpgradeOutlined'
+import ClassOutlinedIcon from '@mui/icons-material/ClassOutlined'
 import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined'
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
 import RequestQuoteOutlinedIcon from '@mui/icons-material/RequestQuoteOutlined'
@@ -28,12 +29,14 @@ import { getAcademicYears } from '@/services/academicYearApi'
 import { getClassesByYear } from '@/services/classesApi'
 import { getStudentsList } from '@/services/studentsApi'
 import ClassMultiSelect from '@/components/forms/ClassMultiSelect'
+import StudentClassActionDialog from '@/components/students/StudentClassActionDialog'
+import ApplyFeePlanDialog from '@/components/students/ApplyFeePlanDialog'
 import { useSwitchToStudent } from '@/hooks/useSwitchToStudent'
 
 const defaultFilters = {
   search: '',
   st_on_roll: '1',
-  ay_id: '',
+  ay_id: 'all',
   st_bohra: '',
   cg_id: [],
   st_gender: '',
@@ -131,6 +134,17 @@ function StudentRowMenu({ student, onAction }) {
         <MenuItem
           onClick={() => {
             setAnchorEl(null)
+            onAction('fee_plan', student)
+          }}
+        >
+          <ListItemIcon>
+            <RequestQuoteOutlinedIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Apply fee plan</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null)
             onAction('upgrade', student)
           }}
         >
@@ -138,6 +152,17 @@ function StudentRowMenu({ student, onAction }) {
             <UpgradeOutlinedIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Upgrade</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null)
+            onAction('change_class', student)
+          }}
+        >
+          <ListItemIcon>
+            <ClassOutlinedIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Change class</ListItemText>
         </MenuItem>
       </Menu>
     </>
@@ -160,6 +185,18 @@ export default function StudentsPage() {
   const [selectedIds, setSelectedIds] = useState([])
   const [bulkAnchor, setBulkAnchor] = useState(null)
   const [toast, setToast] = useState({ open: false, message: '' })
+  const [classAction, setClassAction] = useState({
+    open: false,
+    mode: 'upgrade',
+    stIds: [],
+    defaultAyId: '',
+  })
+  const [feePlanAction, setFeePlanAction] = useState({
+    open: false,
+    stIds: [],
+    defaultAyId: '',
+  })
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(filters.search.trim()), 400)
@@ -175,12 +212,9 @@ export default function StudentsPage() {
         if (!alive) return
         if (Number(res.status) === 200 && res.data?.years) {
           setYears(res.data.years)
-          const defaultId = String(
-            res.data.current_ay_id || res.data.years[0]?.ay_id || '',
-          )
           setFilters({
             ...defaultFilters,
-            ay_id: defaultId,
+            ay_id: 'all',
             st_on_roll: '1',
           })
         } else {
@@ -199,7 +233,7 @@ export default function StudentsPage() {
   }, [])
 
   useEffect(() => {
-    if (!filters.ay_id) {
+    if (!filters.ay_id || filters.ay_id === 'all') {
       setClasses([])
       return
     }
@@ -239,6 +273,7 @@ export default function StudentsPage() {
         dob_to: filters.dob_to,
         page: filters.page,
         perpage: filters.perpage,
+        reloadKey,
       }),
     [
       debouncedSearch,
@@ -251,12 +286,15 @@ export default function StudentsPage() {
       filters.dob_to,
       filters.page,
       filters.perpage,
+      reloadKey,
     ],
   )
 
   useEffect(() => {
     const query = JSON.parse(queryKey)
-    if (!query.ay_id) return
+    if (query.ay_id === '' || query.ay_id === undefined || query.ay_id === null) {
+      return
+    }
 
     let alive = true
     async function loadStudents() {
@@ -308,13 +346,9 @@ export default function StudentsPage() {
   }
 
   function resetFilters() {
-    const ay =
-      years.find((y) => y.ay_current)?.ay_id ||
-      years[0]?.ay_id ||
-      filters.ay_id
     setFilters({
       ...defaultFilters,
-      ay_id: String(ay || ''),
+      ay_id: 'all',
       st_on_roll: '1',
       cg_id: [],
     })
@@ -340,6 +374,23 @@ export default function StudentsPage() {
     )
   }
 
+  function openClassAction(mode, stIds = [], defaultAyId = '') {
+    setClassAction({
+      open: true,
+      mode,
+      stIds,
+      defaultAyId,
+    })
+  }
+
+  function openFeePlanAction(stIds = [], defaultAyId = '') {
+    setFeePlanAction({
+      open: true,
+      stIds,
+      defaultAyId,
+    })
+  }
+
   async function onRowAction(action, student) {
     if (action === 'view') {
       navigate(`/students/${student.st_id}`)
@@ -354,30 +405,86 @@ export default function StudentsPage() {
       }
       return
     }
-    const name = student.name || `student #${student.st_id}`
-    const labels = {
-      edit: `Edit “${name}” is coming soon.`,
-      upgrade: `Upgrade “${name}” is coming soon.`,
+    if (action === 'fee_plan') {
+      openFeePlanAction(
+        [student.st_id],
+        student.ay_id || filters.ay_id,
+      )
+      return
     }
-    showComingSoon(labels[action] || 'Coming soon.')
+    if (action === 'upgrade') {
+      openClassAction('upgrade', [student.st_id], student.ay_id || filters.ay_id)
+      return
+    }
+    if (action === 'change_class') {
+      openClassAction('change_class', [student.st_id], student.ay_id || filters.ay_id)
+      return
+    }
+    const name = student.name || `student #${student.st_id}`
+    showComingSoon(`Edit “${name}” is coming soon.`)
   }
 
   function onBulkAction(action) {
     setBulkAnchor(null)
+    if (action === 'upgrade') {
+      openClassAction(
+        'upgrade',
+        selectedIds.map(Number),
+        filters.ay_id === 'all' ? '' : filters.ay_id,
+      )
+      return
+    }
+    if (action === 'change_class') {
+      if (filters.ay_id === 'all' && !selectedIds.length) {
+        showComingSoon(
+          'Select students or pick a specific academic year filter for bulk change class.',
+        )
+        return
+      }
+      openClassAction(
+        'change_class',
+        selectedIds.map(Number),
+        filters.ay_id === 'all' ? '' : filters.ay_id,
+      )
+      return
+    }
+    if (action === 'fee_plan') {
+      openFeePlanAction(
+        selectedIds.map(Number),
+        filters.ay_id === 'all' ? '' : filters.ay_id,
+      )
+      return
+    }
     if (!selectedIds.length) {
-      showComingSoon('Select at least one student for bulk actions.')
+      showComingSoon('Select at least one student for this bulk action.')
       return
     }
     const count = selectedIds.length
     const labels = {
       export: `Export Excel for ${count} student(s) is coming soon.`,
-      fee_plan: `Apply fee plan for ${count} student(s) is coming soon.`,
-      upgrade: `Upgrade for ${count} student(s) is coming soon.`,
     }
     showComingSoon(labels[action] || 'Coming soon.')
   }
 
-  const colSpan = 11
+  function onClassActionSuccess(res) {
+    setSelectedIds([])
+    setReloadKey((k) => k + 1)
+    setToast({
+      open: true,
+      message: res.message || 'Done.',
+    })
+  }
+
+  function onFeePlanSuccess(res) {
+    setSelectedIds([])
+    setReloadKey((k) => k + 1)
+    setToast({
+      open: true,
+      message: res.message || 'Fee plan applied.',
+    })
+  }
+
+  const colSpan = 12
 
   return (
     <section className="module-page students-page">
@@ -391,7 +498,7 @@ export default function StudentsPage() {
               variant="contained"
               color="primary"
               startIcon={<PersonAddAlt1Icon />}
-              onClick={() => showComingSoon('Add student is coming soon.')}
+              onClick={() => navigate('/students/new')}
             >
               Add student
             </Button>
@@ -429,6 +536,12 @@ export default function StudentsPage() {
                   <UpgradeOutlinedIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText>Upgrade</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={() => onBulkAction('change_class')}>
+                <ListItemIcon>
+                  <ClassOutlinedIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Change class</ListItemText>
               </MenuItem>
             </Menu>
           </div>
@@ -510,6 +623,9 @@ export default function StudentsPage() {
               select: {
                 displayEmpty: true,
                 renderValue: (selected) => {
+                  if (selected === 'all') {
+                    return 'All years'
+                  }
                   if (!selected) {
                     return (
                       <span className="students-filters__ph">Academic year</span>
@@ -525,7 +641,7 @@ export default function StudentsPage() {
             }}
             inputProps={{ 'aria-label': 'Academic year' }}
           >
-            <MenuItem value="">Academic year</MenuItem>
+            <MenuItem value="all">All years</MenuItem>
             {years.map((y) => (
               <MenuItem key={y.ay_id} value={String(y.ay_id)}>
                 {y.ay_name}
@@ -558,7 +674,7 @@ export default function StudentsPage() {
             <ClassMultiSelect
               options={classes}
               value={filters.cg_id}
-              disabled={loadingClasses || !filters.ay_id}
+              disabled={loadingClasses || !filters.ay_id || filters.ay_id === 'all'}
               placeholder="Class"
               onChange={(cg_id) => setField('cg_id', cg_id)}
             />
@@ -610,6 +726,7 @@ export default function StudentsPage() {
               <th>SN</th>
               <th>Name</th>
               <th>Roll no</th>
+              <th>Year</th>
               <th>Class</th>
               <th>Gender</th>
               <th>DOB</th>
@@ -673,6 +790,7 @@ export default function StudentsPage() {
                       </div>
                     </td>
                     <td>{st.roll_no || '—'}</td>
+                    <td>{st.ay_name || '—'}</td>
                     <td>{st.class_name || '—'}</td>
                     <td>{st.gender || '—'}</td>
                     <td>{st.dob || '—'}</td>
@@ -718,6 +836,27 @@ export default function StudentsPage() {
         }}
         rowsPerPageOptions={[10, 20, 50, 100]}
         labelRowsPerPage="Rows per page:"
+      />
+
+      <StudentClassActionDialog
+        open={classAction.open}
+        mode={classAction.mode}
+        onClose={() => setClassAction((prev) => ({ ...prev, open: false }))}
+        years={years}
+        stIds={classAction.stIds}
+        listFilters={filters}
+        defaultAyId={classAction.defaultAyId}
+        onSuccess={onClassActionSuccess}
+      />
+
+      <ApplyFeePlanDialog
+        open={feePlanAction.open}
+        onClose={() => setFeePlanAction((prev) => ({ ...prev, open: false }))}
+        years={years}
+        stIds={feePlanAction.stIds}
+        listFilters={filters}
+        defaultAyId={feePlanAction.defaultAyId}
+        onSuccess={onFeePlanSuccess}
       />
 
       <Snackbar

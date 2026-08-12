@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import LoginPage from '@/pages/LoginPage'
 import DashboardPage from '@/pages/DashboardPage'
 import StudentsPage from '@/pages/admin/StudentsPage'
+import AddStudentPage from '@/pages/admin/AddStudentPage'
 import StudentDetailsPage from '@/pages/admin/StudentDetailsPage'
 import FeesManagementPage from '@/pages/admin/FeesManagementPage'
 import TransactionPage from '@/pages/admin/TransactionPage'
@@ -35,6 +36,7 @@ export default function App() {
         >
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/students" element={<StudentsPage />} />
+          <Route path="/students/new" element={<AddStudentPage />} />
           <Route path="/students/:stId" element={<StudentDetailsPage />} />
           <Route path="/fees-management" element={<FeesManagementPage />} />
           <Route path="/transaction" element={<TransactionPage />} />

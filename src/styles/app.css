@@ -2122,6 +2122,26 @@
   flex-wrap: wrap;
 }
 
+.student-action-dialog__hint {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: #1f4d3a;
+}
+
+.student-action-dialog__note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.student-action-dialog__error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--danger-text);
+}
+
 .students-page__head h1 {
   margin: 0;
   font-family: var(--font-display);
@@ -3670,6 +3690,120 @@
   }
 }
 
+
+/* ---- Add Student ---- */
+.add-student-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding-bottom: 1.5rem;
+}
+
+.add-student-page__head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.add-student-page__head h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.55rem, 2.2vw, 2rem);
+  font-weight: 600;
+}
+
+.add-student-page__head p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+
+.add-student-page__back {
+  text-transform: none !important;
+  margin-bottom: 0.15rem;
+}
+
+.add-student-page__stepper {
+  padding: 0.35rem 0 0.5rem;
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 0.75rem;
+}
+
+.add-student-page__alert {
+  border-radius: 0.65rem !important;
+}
+
+.add-student-page__panel {
+  padding: 1.15rem 1.2rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(31, 77, 58, 0.1);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 8px 24px rgba(16, 42, 32, 0.04);
+}
+
+.add-student-page__panel h2 {
+  margin: 0 0 1rem;
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  font-weight: 650;
+  color: #1f4d3a;
+}
+
+.add-student__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem 0.75rem;
+}
+
+.add-student__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.add-student__label {
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--ink-soft);
+  letter-spacing: 0.01em;
+}
+
+.add-student__label em {
+  color: #c0392b;
+  font-style: normal;
+  margin-left: 0.15rem;
+}
+
+.add-student__field--invalid .add-student__label {
+  color: #c0392b;
+}
+
+.add-student__field-error {
+  font-size: 0.72rem;
+  color: #c0392b;
+  font-weight: 600;
+}
+
+.add-student-page__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  padding-top: 0.25rem;
+}
+
+@media (max-width: 1100px) {
+  .add-student__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .add-student__grid {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* ---- Student Details ---- */
 .st-detail-page {

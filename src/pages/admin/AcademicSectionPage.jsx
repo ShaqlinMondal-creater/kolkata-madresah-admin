@@ -34,6 +34,8 @@ import {
 } from '@/services/academicYearApi'
 import { getClassesByYear } from '@/services/classesApi'
 import { getFeePlansByYear } from '@/services/feePlansApi'
+import FeePlanFormDialog from '@/components/academic/FeePlanFormDialog'
+import ClassFormDialog from '@/components/academic/ClassFormDialog'
 
 const emptyForm = {
   ay_id: null,
@@ -127,6 +129,12 @@ function SeasonPanel({
   onToggle,
   onSessionAction,
   onComingSoon,
+  onAddFeePlan,
+  onEditFeePlan,
+  onAddClass,
+  onEditClass,
+  plansReloadKey = 0,
+  classesReloadKey = 0,
 }) {
   const [tab, setTab] = useState(0)
   const [classSearch, setClassSearch] = useState('')
@@ -169,7 +177,7 @@ function SeasonPanel({
     return () => {
       alive = false
     }
-  }, [expanded, year.ay_id, debouncedClassSearch])
+  }, [expanded, year.ay_id, debouncedClassSearch, classesReloadKey])
 
   useEffect(() => {
     if (!expanded || tab !== 1) return
@@ -206,7 +214,7 @@ function SeasonPanel({
     return () => {
       alive = false
     }
-  }, [expanded, tab, year.ay_id, debouncedPlanSearch])
+  }, [expanded, tab, year.ay_id, debouncedPlanSearch, plansReloadKey])
 
   const fromLabel = `${monthLabel(year.ay_start_month)} to ${monthLabel(year.ay_end_month)}`
 
@@ -277,9 +285,13 @@ function SeasonPanel({
                 variant="contained"
                 size="small"
                 startIcon={<AddIcon />}
-                onClick={() =>
-                  onComingSoon(tab === 0 ? 'Add new class' : 'Add new fee plan')
-                }
+                onClick={() => {
+                  if (tab === 0) {
+                    onAddClass?.(year)
+                    return
+                  }
+                  onAddFeePlan?.(year)
+                }}
               >
                 Add New
               </Button>
@@ -323,9 +335,7 @@ function SeasonPanel({
                           <Tooltip title="Edit class">
                             <IconButton
                               size="small"
-                              onClick={() =>
-                                onComingSoon(`Edit class ${cls.cg_name}`)
-                              }
+                              onClick={() => onEditClass?.(year, cls)}
                             >
                               <EditOutlinedIcon fontSize="small" />
                             </IconButton>
@@ -378,9 +388,7 @@ function SeasonPanel({
                           <Tooltip title="Edit fee plan">
                             <IconButton
                               size="small"
-                              onClick={() =>
-                                onComingSoon(`Edit fee plan ${plan.fp_name}`)
-                              }
+                              onClick={() => onEditFeePlan?.(year, plan)}
                             >
                               <EditOutlinedIcon fontSize="small" />
                             </IconButton>
@@ -420,6 +428,12 @@ export default function AcademicSectionPage() {
   const [formError, setFormError] = useState('')
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' })
   const [reloadKey, setReloadKey] = useState(0)
+  const [plansReloadKey, setPlansReloadKey] = useState(0)
+  const [classesReloadKey, setClassesReloadKey] = useState(0)
+  const [feePlanDialogOpen, setFeePlanDialogOpen] = useState(false)
+  const [feePlanInitial, setFeePlanInitial] = useState(null)
+  const [classDialogOpen, setClassDialogOpen] = useState(false)
+  const [classInitial, setClassInitial] = useState(null)
 
   useEffect(() => {
     let alive = true
@@ -512,6 +526,66 @@ export default function AcademicSectionPage() {
     }
   }
 
+  function openAddFeePlan(year) {
+    setFeePlanInitial({
+      fp_id: null,
+      ay_id: year.ay_id,
+      ay_name: year.ay_name,
+      fp_name: '',
+      fp_type: 'Other One-Time Fee',
+      cg_ids: [],
+    })
+    setFeePlanDialogOpen(true)
+  }
+
+  function openEditFeePlan(year, plan) {
+    setFeePlanInitial({
+      fp_id: plan.fp_id,
+      ay_id: year.ay_id,
+      ay_name: year.ay_name,
+      fp_name: plan.fp_name || '',
+      fp_type: plan.fp_type || 'Other One-Time Fee',
+      cg_ids: Array.isArray(plan.cg_ids) ? plan.cg_ids : [],
+    })
+    setFeePlanDialogOpen(true)
+  }
+
+  function onFeePlanSaved(res) {
+    showToast(res.message || 'Fee plan saved.')
+    setPlansReloadKey((k) => k + 1)
+    setReloadKey((k) => k + 1)
+  }
+
+  function openAddClass(year) {
+    setClassInitial({
+      cg_id: null,
+      ay_id: year.ay_id,
+      ay_name: year.ay_name,
+      cg_name: '',
+      cg_section_number: '',
+      cg_order: '',
+    })
+    setClassDialogOpen(true)
+  }
+
+  function openEditClass(year, cls) {
+    setClassInitial({
+      cg_id: cls.cg_id,
+      ay_id: year.ay_id,
+      ay_name: year.ay_name,
+      cg_name: cls.cg_name || '',
+      cg_section_number: cls.cg_section_number ?? '',
+      cg_order: cls.cg_order != null ? String(cls.cg_order) : '',
+    })
+    setClassDialogOpen(true)
+  }
+
+  function onClassSaved(res) {
+    showToast(res.message || 'Class saved.')
+    setClassesReloadKey((k) => k + 1)
+    setReloadKey((k) => k + 1)
+  }
+
   async function onSave() {
     const payload = {
       ay_name: form.ay_name.trim(),
@@ -599,6 +673,12 @@ export default function AcademicSectionPage() {
                 else onSetCurrent(row)
               }}
               onComingSoon={(msg) => showToast(`${msg} is coming soon.`, 'info')}
+              onAddFeePlan={openAddFeePlan}
+              onEditFeePlan={openEditFeePlan}
+              onAddClass={openAddClass}
+              onEditClass={openEditClass}
+              plansReloadKey={plansReloadKey}
+              classesReloadKey={classesReloadKey}
             />
           ))
         )}
@@ -721,6 +801,20 @@ export default function AcademicSectionPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <FeePlanFormDialog
+        open={feePlanDialogOpen}
+        onClose={() => setFeePlanDialogOpen(false)}
+        initial={feePlanInitial}
+        onSuccess={onFeePlanSaved}
+      />
+
+      <ClassFormDialog
+        open={classDialogOpen}
+        onClose={() => setClassDialogOpen(false)}
+        initial={classInitial}
+        onSuccess={onClassSaved}
+      />
 
       <Snackbar
         open={toast.open}

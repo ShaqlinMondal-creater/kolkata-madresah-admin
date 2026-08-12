@@ -1,13 +1,5 @@
 import { API_BASE_URL } from '@/config/apiConfig'
-
-async function parseJson(response) {
-  const text = await response.text()
-  try {
-    return text ? JSON.parse(text) : {}
-  } catch {
-    throw new Error('Invalid response from server')
-  }
-}
+import { parseJson } from '@/services/apiClient'
 
 export async function getDashboardStats(ayId) {
   const body = {}
