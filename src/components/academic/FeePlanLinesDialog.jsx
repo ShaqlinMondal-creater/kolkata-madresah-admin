@@ -64,6 +64,32 @@ function isMonthlyPlanType(fpType) {
   return t === 'main monthly fee' || t === 'monthly fee'
 }
 
+function isAdmissionPlanType(fpType) {
+  const t = String(fpType || '').toLowerCase()
+  return t === 'main admission fee' || t === 'admission fee'
+}
+
+/** e.g. 2025-26 from session years / ay_name */
+function sessionShortLabel(plan) {
+  const startY = Number(plan?.ay_start_year)
+  const endY = Number(plan?.ay_end_year)
+  if (startY > 0 && endY > 0) {
+    return `${startY}-${String(endY).slice(-2)}`
+  }
+  const ayName = String(plan?.ay_name || '').trim()
+  const match = ayName.match(/(\d{4})\s*[-–/]\s*(\d{2,4})/)
+  if (match) {
+    const end = match[2].length === 2 ? match[2] : match[2].slice(-2)
+    return `${match[1]}-${end}`
+  }
+  return ayName || ''
+}
+
+function defaultAdmissionFeeName(plan) {
+  const label = sessionShortLabel(plan)
+  return label ? `Admission Fees (${label})` : 'Admission Fees'
+}
+
 /** Build Apr–Mar (or session range) month rows for monthly fee create */
 function buildSessionMonths(plan) {
   const startMonth = Number(plan?.ay_start_month) || 4
@@ -85,7 +111,7 @@ function buildSessionMonths(plan) {
       key: `${y}-${m}`,
       month: m,
       year: y,
-      name: `${monthName}-${y} Fees`,
+      name: `Monthly Fees (${monthName} ${y})`,
       amount: '',
       due_date: `10-${pad2(m)}-${y}`,
       late_fee: '0',
@@ -126,6 +152,7 @@ export default function FeePlanLinesDialog({
   const fpId = plan?.fp_id ? Number(plan.fp_id) : 0
   const isEdit = Boolean(form.fpp_id)
   const monthlyPlan = isMonthlyPlanType(plan?.fp_type)
+  const admissionPlan = isAdmissionPlanType(plan?.fp_type)
 
   const existingNames = useMemo(
     () => new Set(lines.map((l) => String(l.name || '').trim().toLowerCase())),
@@ -176,7 +203,6 @@ export default function FeePlanLinesDialog({
 
   function openAdd() {
     setError('')
-    setForm(emptyLine)
     if (monthlyPlan) {
       const rows = buildSessionMonths(plan).map((row) => {
         const exists = existingNames.has(row.name.toLowerCase())
@@ -191,8 +217,15 @@ export default function FeePlanLinesDialog({
       setDefaultLateFee('0')
       setShowMonthly(true)
       setShowForm(false)
+      setForm(emptyLine)
       return
     }
+
+    const admissionName = admissionPlan ? defaultAdmissionFeeName(plan) : ''
+    setForm({
+      ...emptyLine,
+      name: admissionName,
+    })
     setShowMonthly(false)
     setShowForm(true)
   }
@@ -586,7 +619,11 @@ export default function FeePlanLinesDialog({
                   onChange={(e) =>
                     setForm((f) => ({ ...f, name: e.target.value }))
                   }
-                  placeholder="e.g. Admission Fee"
+                  placeholder={
+                    admissionPlan
+                      ? 'e.g. Admission Fees (2025-26)'
+                      : 'e.g. Admission Fee'
+                  }
                   sx={fieldSx}
                   disabled={saving}
                 />
