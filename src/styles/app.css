@@ -3479,6 +3479,209 @@
 .ay-plan-card__actions {
   grid-column: 2;
   grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.fee-lines-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.fee-lines-dialog__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.fee-lines-dialog__summary strong {
+  color: #16382b;
+  margin-right: auto;
+}
+
+.fee-lines-dialog__form {
+  padding: 0.85rem;
+  border: 1px solid rgba(196, 163, 90, 0.35);
+  border-radius: 0.7rem;
+  background: rgba(250, 247, 240, 0.65);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.fee-lines-dialog__form-title {
+  margin: 0;
+  font-weight: 600;
+  color: #16382b;
+  font-size: 0.95rem;
+}
+
+.fee-lines-dialog__hint {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--ink-soft);
+}
+
+.fee-lines-dialog__fill-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.75rem;
+}
+
+.fee-lines-dialog__progress {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #16382b;
+}
+
+.fee-lines-dialog__form--monthly {
+  gap: 0.85rem;
+}
+
+.fee-lines-monthly {
+  max-height: 360px;
+  overflow: auto;
+  border: 1px solid rgba(22, 56, 43, 0.12);
+  border-radius: 0.6rem;
+  background: #fff;
+}
+
+.fee-lines-monthly__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.fee-lines-monthly__table th,
+.fee-lines-monthly__table td {
+  padding: 0.45rem 0.55rem;
+  border-bottom: 1px solid rgba(22, 56, 43, 0.08);
+  vertical-align: middle;
+  text-align: left;
+}
+
+.fee-lines-monthly__table th:first-child,
+.fee-lines-monthly__table td:first-child {
+  width: 44px;
+  text-align: center;
+}
+
+.fee-lines-monthly__table th:nth-child(3),
+.fee-lines-monthly__table td:nth-child(3) {
+  min-width: 100px;
+}
+
+.fee-lines-monthly__table th:nth-child(4),
+.fee-lines-monthly__table td:nth-child(4) {
+  min-width: 130px;
+}
+
+.fee-lines-monthly__table th:nth-child(5),
+.fee-lines-monthly__table td:nth-child(5) {
+  min-width: 100px;
+}
+
+.fee-lines-monthly__table thead th {
+  position: sticky;
+  top: 0;
+  background: #f7f4ec;
+  z-index: 1;
+  font-weight: 600;
+  color: #16382b;
+}
+
+.fee-lines-monthly__row--done {
+  opacity: 0.55;
+  background: rgba(22, 56, 43, 0.03);
+}
+
+.fee-lines-monthly__tag {
+  display: inline-block;
+  margin-left: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.fee-lines-dialog__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.fee-lines-dialog__form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.fee-lines-dialog__loading {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.fee-lines-dialog__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.fee-lines-dialog__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(22, 56, 43, 0.1);
+  border-radius: 0.6rem;
+  background: #fff;
+}
+
+.fee-lines-dialog__item > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.fee-lines-dialog__item strong {
+  color: #16382b;
+}
+
+.fee-lines-dialog__item span {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.fee-lines-dialog__item-right {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.fee-lines-dialog__item-right > span {
+  font-weight: 600;
+  color: #16382b;
+  font-size: 0.92rem;
+}
+
+@media (max-width: 560px) {
+  .fee-lines-dialog__grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 720px) {

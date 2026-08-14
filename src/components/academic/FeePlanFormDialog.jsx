@@ -19,7 +19,6 @@ import { createFeePlan, updateFeePlan } from '@/services/feePlansApi'
 const FEE_PLAN_TYPES = [
   'Main Admission Fee',
   'Main Monthly Fee',
-  'Monthly Fee',
   'Other One-Time Fee',
 ]
 
@@ -55,6 +54,10 @@ export default function FeePlanFormDialog({
   const [error, setError] = useState('')
 
   const isEdit = Boolean(form.fp_id)
+  const typeOptions =
+    form.fp_type === 'Monthly Fee'
+      ? [...FEE_PLAN_TYPES, 'Monthly Fee']
+      : FEE_PLAN_TYPES
 
   useEffect(() => {
     if (!open) return
@@ -191,7 +194,7 @@ export default function FeePlanFormDialog({
             setForm((prev) => ({ ...prev, fp_type: e.target.value }))
           }
         >
-          {FEE_PLAN_TYPES.map((type) => (
+          {typeOptions.map((type) => (
             <MenuItem key={type} value={type}>
               {type}
             </MenuItem>

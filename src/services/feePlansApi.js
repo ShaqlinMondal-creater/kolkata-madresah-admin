@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '@/config/apiConfig'
-import { parseJson as parseJsonStrict } from '@/services/apiClient'
+import { parseJson as parseJsonStrict, forceLogoutToHome } from '@/services/apiClient'
 import { buildStudentsPayload } from '@/services/studentsApi'
 
 async function parseJson(response) {
@@ -113,7 +113,43 @@ export async function createFeePlan(payload) {
         : [],
     }),
   })
-  return parseJsonStrict(response)
+
+  const text = await response.text()
+  if (!text || !String(text).trim()) {
+    return {
+      status: response.status || 500,
+      message: `Empty response from create API (HTTP ${response.status}). Upload APIs/fees/plans/create.php and _helpers.php to cPanel.`,
+      data: {},
+    }
+  }
+
+  let data
+  try {
+    data = JSON.parse(text)
+  } catch {
+    return {
+      status: response.status || 500,
+      message: `Invalid JSON from create API (HTTP ${response.status}). Check PHP errors on server.`,
+      data: {},
+    }
+  }
+
+  if (
+    response.status === 401 ||
+    Number(data?.status) === 401 ||
+    String(data?.message || '')
+      .toLowerCase()
+      .includes('unauthorized')
+  ) {
+    forceLogoutToHome(`${API_BASE_URL}/fees/plans/create.php`)
+  }
+
+  if (data && typeof data === 'object' && data.status == null && !data.message) {
+    data.status = response.status || 500
+    data.message = `Unexpected create API response (HTTP ${response.status}).`
+  }
+
+  return data
 }
 
 /** Update existing fee plan */
@@ -133,6 +169,60 @@ export async function updateFeePlan(payload) {
       cg_ids: Array.isArray(payload.cg_ids)
         ? payload.cg_ids.map(Number).filter((id) => id > 0)
         : [],
+    }),
+  })
+  return parseJsonStrict(response)
+}
+
+/** List fee lines under a plan (fee_plan_period) */
+export async function getFeePlanLines(fpId) {
+  const response = await fetch(`${API_BASE_URL}/fees/plans/lines/list.php`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ fp_id: Number(fpId) }),
+  })
+  return parseJsonStrict(response)
+}
+
+/** Add fee line under a plan */
+export async function createFeePlanLine(payload) {
+  const response = await fetch(`${API_BASE_URL}/fees/plans/lines/create.php`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({
+      fp_id: Number(payload.fp_id),
+      name: payload.name,
+      amount: payload.amount,
+      due_date: payload.due_date,
+      late_fee: payload.late_fee ?? 0,
+    }),
+  })
+  return parseJsonStrict(response)
+}
+
+/** Update fee line */
+export async function updateFeePlanLine(payload) {
+  const response = await fetch(`${API_BASE_URL}/fees/plans/lines/update.php`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({
+      fpp_id: Number(payload.fpp_id),
+      name: payload.name,
+      amount: payload.amount,
+      due_date: payload.due_date,
+      late_fee: payload.late_fee ?? 0,
     }),
   })
   return parseJsonStrict(response)

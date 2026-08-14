@@ -21,6 +21,7 @@ import Collapse from '@mui/material/Collapse'
 import AddIcon from '@mui/icons-material/Add'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined'
 import StarBorderOutlinedIcon from '@mui/icons-material/StarBorderOutlined'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import CloseIcon from '@mui/icons-material/Close'
@@ -35,6 +36,7 @@ import {
 import { getClassesByYear } from '@/services/classesApi'
 import { getFeePlansByYear } from '@/services/feePlansApi'
 import FeePlanFormDialog from '@/components/academic/FeePlanFormDialog'
+import FeePlanLinesDialog from '@/components/academic/FeePlanLinesDialog'
 import ClassFormDialog from '@/components/academic/ClassFormDialog'
 
 const emptyForm = {
@@ -131,6 +133,7 @@ function SeasonPanel({
   onComingSoon,
   onAddFeePlan,
   onEditFeePlan,
+  onManageFeeLines,
   onAddClass,
   onEditClass,
   plansReloadKey = 0,
@@ -380,11 +383,34 @@ function SeasonPanel({
                           </span>
                         </div>
                         <div className="ay-plan-card__meta">
-                          <span>Classes: {plan.class_names_label || '—'}</span>
-                          <span>Lines: {plan.line_count}</span>
-                          <span>Total: ₹{formatInr(plan.amount_total)}</span>
+                          <Tooltip
+                            title={
+                              plan.class_names_label &&
+                              plan.class_names_label !== '—'
+                                ? plan.class_names_label
+                                : 'No classes linked'
+                            }
+                          >
+                            <span>
+                              Classes:{' '}
+                              {Number(plan.class_count ?? plan.cg_ids?.length) ||
+                                0}
+                            </span>
+                          </Tooltip>
+                          <span>Lines: {Number(plan.line_count) || 0}</span>
+                          <span>
+                            Total: ₹{formatInr(plan.amount_total)}
+                          </span>
                         </div>
                         <div className="ay-plan-card__actions">
+                          <Tooltip title="Add / manage fees">
+                            <IconButton
+                              size="small"
+                              onClick={() => onManageFeeLines?.(year, plan)}
+                            >
+                              <ListAltOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                           <Tooltip title="Edit fee plan">
                             <IconButton
                               size="small"
@@ -432,6 +458,8 @@ export default function AcademicSectionPage() {
   const [classesReloadKey, setClassesReloadKey] = useState(0)
   const [feePlanDialogOpen, setFeePlanDialogOpen] = useState(false)
   const [feePlanInitial, setFeePlanInitial] = useState(null)
+  const [feeLinesDialogOpen, setFeeLinesDialogOpen] = useState(false)
+  const [feeLinesPlan, setFeeLinesPlan] = useState(null)
   const [classDialogOpen, setClassDialogOpen] = useState(false)
   const [classInitial, setClassInitial] = useState(null)
 
@@ -556,6 +584,26 @@ export default function AcademicSectionPage() {
     setReloadKey((k) => k + 1)
   }
 
+  function openManageFeeLines(year, plan) {
+    setFeeLinesPlan({
+      fp_id: plan.fp_id,
+      fp_name: plan.fp_name || '',
+      fp_type: plan.fp_type || '',
+      ay_id: year.ay_id,
+      ay_name: year.ay_name,
+      ay_start_year: year.ay_start_year,
+      ay_start_month: year.ay_start_month,
+      ay_end_year: year.ay_end_year,
+      ay_end_month: year.ay_end_month,
+    })
+    setFeeLinesDialogOpen(true)
+  }
+
+  function onFeeLinesChanged(res) {
+    showToast(res?.message || 'Fee line saved.')
+    setPlansReloadKey((k) => k + 1)
+  }
+
   function openAddClass(year) {
     setClassInitial({
       cg_id: null,
@@ -675,6 +723,7 @@ export default function AcademicSectionPage() {
               onComingSoon={(msg) => showToast(`${msg} is coming soon.`, 'info')}
               onAddFeePlan={openAddFeePlan}
               onEditFeePlan={openEditFeePlan}
+              onManageFeeLines={openManageFeeLines}
               onAddClass={openAddClass}
               onEditClass={openEditClass}
               plansReloadKey={plansReloadKey}
@@ -807,6 +856,13 @@ export default function AcademicSectionPage() {
         onClose={() => setFeePlanDialogOpen(false)}
         initial={feePlanInitial}
         onSuccess={onFeePlanSaved}
+      />
+
+      <FeePlanLinesDialog
+        open={feeLinesDialogOpen}
+        onClose={() => setFeeLinesDialogOpen(false)}
+        plan={feeLinesPlan}
+        onChanged={onFeeLinesChanged}
       />
 
       <ClassFormDialog
