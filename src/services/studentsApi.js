@@ -174,3 +174,17 @@ export async function changeStudentClass({
   })
   return parseJson(response)
 }
+
+/** Mark student off-roll (blocked if deposit or wallet has money) */
+export async function offRollStudent(stId) {
+  const response = await fetch(`${API_BASE_URL}/students/off_roll.php`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ st_id: Number(stId) }),
+  })
+  return parseJson(response)
+}

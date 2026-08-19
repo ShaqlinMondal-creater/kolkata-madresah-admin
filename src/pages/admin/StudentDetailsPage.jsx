@@ -3,6 +3,11 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
+import Collapse from '@mui/material/Collapse'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
 import Snackbar from '@mui/material/Snackbar'
 import Tab from '@mui/material/Tab'
@@ -13,6 +18,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined'
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import ExpandMoreOutlinedIcon from '@mui/icons-material/ExpandMoreOutlined'
 import LoginIcon from '@mui/icons-material/Login'
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined'
 import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined'
@@ -20,6 +26,7 @@ import { getFeesList } from '@/services/feesApi'
 import {
   getStudentDetails,
   updateStudentField,
+  offRollStudent,
 } from '@/services/studentsApi'
 import { useSwitchToStudent } from '@/hooks/useSwitchToStudent'
 
@@ -293,16 +300,28 @@ function InlineField({
   )
 }
 
-function DetailSection({ title, hint, children }) {
+function DetailSection({ title, hint, defaultOpen = false, children }) {
+  const [open, setOpen] = useState(defaultOpen)
+
   return (
-    <section className="st-detail__card">
-      <header className="st-detail__card-head">
+    <section className={`st-detail__card${open ? ' is-open' : ''}`}>
+      <button
+        type="button"
+        className="st-detail__card-head st-detail__card-toggle"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
         <div>
           <h2>{title}</h2>
           {hint ? <p>{hint}</p> : null}
         </div>
-      </header>
-      <div className="st-detail__grid">{children}</div>
+        <span className={`st-detail__chevron${open ? ' is-open' : ''}`} aria-hidden>
+          <ExpandMoreOutlinedIcon fontSize="small" />
+        </span>
+      </button>
+      <Collapse in={open} timeout="auto">
+        <div className="st-detail__grid">{children}</div>
+      </Collapse>
     </section>
   )
 }
@@ -436,10 +455,16 @@ export default function StudentDetailsPage() {
   const [switchMsg, setSwitchMsg] = useState('')
   const [refreshing, setRefreshing] = useState(false)
   const [tab, setTab] = useState('details')
-  const [toast, setToast] = useState({ open: false, message: '' })
+  const [toast, setToast] = useState({ open: false, message: '', severity: 'info' })
+  const [offRollOpen, setOffRollOpen] = useState(false)
+  const [offRolling, setOffRolling] = useState(false)
 
   function showComingSoon(label) {
-    setToast({ open: true, message: `${label} is coming soon.` })
+    setToast({ open: true, message: `${label} is coming soon.`, severity: 'info' })
+  }
+
+  function showToast(message, severity = 'info') {
+    setToast({ open: true, message, severity })
   }
 
   async function load(showSpinner = true) {
@@ -619,9 +644,10 @@ export default function StudentDetailsPage() {
                 variant="outlined"
                 color="warning"
                 startIcon={<PersonOffOutlinedIcon />}
-                onClick={() => showComingSoon('Off Roll student')}
+                disabled={!student.on_roll || refreshing || offRolling}
+                onClick={() => setOffRollOpen(true)}
               >
-                Off Roll student
+                {student.on_roll ? 'Off Roll student' : 'Already off-roll'}
               </Button>
             </div>
           </div>
@@ -631,6 +657,7 @@ export default function StudentDetailsPage() {
           <DetailSection
             title="Student Details"
             hint="Click the pen to edit a field · Enter to save · Esc to cancel"
+            defaultOpen
           >
             <InlineField
               label="Bohra"
@@ -956,14 +983,64 @@ export default function StudentDetailsPage() {
         </div>
       ) : null}
 
+      <Dialog
+        open={offRollOpen}
+        onClose={offRolling ? undefined : () => setOffRollOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Off Roll student</DialogTitle>
+        <DialogContent>
+          <p style={{ margin: '0.5rem 0 0' }}>
+            Mark <strong>{student?.name || 'this student'}</strong> off-roll?
+          </p>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--ink-soft)' }}>
+            They will not be able to log in to the student panel. Payments stay
+            mapped. Admin can still open their panel.
+          </p>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOffRollOpen(false)} disabled={offRolling}>
+            Cancel
+          </Button>
+          <Button
+            color="warning"
+            variant="contained"
+            disabled={offRolling}
+            onClick={async () => {
+              setOffRolling(true)
+              try {
+                const res = await offRollStudent(student.st_id)
+                if (Number(res.status) === 200) {
+                  setOffRollOpen(false)
+                  showToast(res.message || 'Student marked off-roll.', 'success')
+                  await refresh()
+                } else {
+                  showToast(res.message || 'Could not mark off-roll.', 'error')
+                }
+              } catch {
+                showToast(
+                  'Off-roll API unavailable. Upload APIs/students/off_roll.php',
+                  'error',
+                )
+              } finally {
+                setOffRolling(false)
+              }
+            }}
+          >
+            {offRolling ? 'Saving…' : 'Mark off-roll'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar
         open={toast.open}
-        autoHideDuration={2800}
+        autoHideDuration={3200}
         onClose={() => setToast((prev) => ({ ...prev, open: false }))}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert
-          severity="info"
+          severity={toast.severity || 'info'}
           variant="filled"
           onClose={() => setToast((prev) => ({ ...prev, open: false }))}
         >
