@@ -15,6 +15,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Snackbar from '@mui/material/Snackbar'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
+import TextField from '@mui/material/TextField'
 import Tooltip from '@mui/material/Tooltip'
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
@@ -27,6 +28,7 @@ import LoginIcon from '@mui/icons-material/Login'
 import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined'
 import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined'
 import { getFeesList } from '@/services/feesApi'
+import { adminAddToWallet, adminPayFees } from '@/services/paymentsApi'
 import {
   getStudentDetails,
   updateStudentField,
@@ -341,7 +343,7 @@ function DetailSection({ title, hint, defaultOpen = false, children }) {
   )
 }
 
-function StudentFeesTab({ student, status }) {
+function StudentFeesTab({ student, status, onPaid }) {
   const isPaid = status === 'paid'
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -351,6 +353,13 @@ function StudentFeesTab({ student, status }) {
   const [payMethod, setPayMethod] = useState('online')
   const [methodAnchor, setMethodAnchor] = useState(null)
   const [payHint, setPayHint] = useState('')
+  const [paySeverity, setPaySeverity] = useState('info')
+  const [paying, setPaying] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
+  const [payDialogOpen, setPayDialogOpen] = useState(false)
+  const [receiptNo, setReceiptNo] = useState('')
+  const [refNo, setRefNo] = useState('')
+  const [remarks, setRemarks] = useState('')
 
   const displayFees = useMemo(
     () => sortFeesForPayment(fees.map(normalizeFeeForSelection)),
@@ -361,6 +370,9 @@ function StudentFeesTab({ student, status }) {
     () => sumSelectedFees(displayFees, selectedIds),
     [displayFees, selectedIds],
   )
+
+  const wallet = Number(student?.wallet || 0)
+  const shortfall = Math.max(0, round2(selectedTotal - wallet))
 
   const selectedMethod =
     ADMIN_PAYMENT_METHODS.find((item) => item.id === payMethod) ||
@@ -412,17 +424,96 @@ function StudentFeesTab({ student, status }) {
     return () => {
       alive = false
     }
-  }, [student?.st_id, student?.roll_no, student?.ay_id, student?.ay_name, status])
+  }, [
+    student?.st_id,
+    student?.roll_no,
+    student?.ay_id,
+    student?.ay_name,
+    status,
+    reloadKey,
+  ])
 
   function handleToggleFee(fId) {
     setSelectedIds((prev) => toggleFeeSelection(displayFees, prev, fId))
   }
 
+  function resetPayForm() {
+    setReceiptNo('')
+    setRefNo('')
+    setRemarks('')
+  }
+
   function handlePayClick() {
-    if (selectedIds.size === 0) return
-    setPayHint(
-      `${selectedMethod.label} payment for ₹${formatPayAmount(selectedTotal)}/- will be connected in the next step.`,
-    )
+    if (selectedIds.size === 0 || paying) return
+    if (
+      (payMethod === 'cash' || payMethod === 'upi') &&
+      shortfall > 0
+    ) {
+      setPayDialogOpen(true)
+      return
+    }
+    void submitPay({})
+  }
+
+  async function submitPay(extra = {}) {
+    if (selectedIds.size === 0 || paying) return
+    setPaying(true)
+    setPayHint('')
+    try {
+      const res = await adminPayFees({
+        st_id: Number(student.st_id),
+        f_ids: [...selectedIds],
+        method: payMethod,
+        ...extra,
+      })
+      const statusCode = Number(res.status)
+      if (statusCode === 200) {
+        setPayDialogOpen(false)
+        resetPayForm()
+        setPaySeverity('success')
+        setPayHint(
+          res.message ||
+            `Paid ₹${formatPayAmount(res.data?.paid_total ?? selectedTotal)}/-`,
+        )
+        setSelectedIds(new Set())
+        setReloadKey((k) => k + 1)
+        onPaid?.(res.data)
+      } else if (statusCode === 501 || res.data?.needs_gateway) {
+        setPaySeverity('info')
+        setPayHint(
+          res.message ||
+            `Shortfall ₹${formatPayAmount(res.data?.shortfall)}/- — Online (Razorpay) comes next.`,
+        )
+      } else {
+        setPaySeverity('error')
+        setPayHint(res.message || 'Could not complete payment.')
+      }
+    } catch {
+      setPaySeverity('error')
+      setPayHint(
+        'Pay API unavailable. Upload APIs/fees/pay.php and _pay_helpers.php',
+      )
+    } finally {
+      setPaying(false)
+    }
+  }
+
+  async function handleConfirmCashUpi() {
+    if (payMethod === 'cash' && !receiptNo.trim()) {
+      setPaySeverity('error')
+      setPayHint('Cash receipt number is required.')
+      return
+    }
+    if (payMethod === 'upi' && !refNo.trim()) {
+      setPaySeverity('error')
+      setPayHint('UPI reference is required.')
+      return
+    }
+    await submitPay({
+      receipt_no: receiptNo.trim(),
+      ref_no: refNo.trim(),
+      remarks: remarks.trim(),
+    })
   }
 
   return (
@@ -527,14 +618,18 @@ function StudentFeesTab({ student, status }) {
             <div className="student-fees-paybar st-detail-fees__paybar">
               <p className="student-fees-paybar__hint">
                 {selectedIds.size > 0
-                  ? `${selectedIds.size} fee(s) · ${selectedMethod.label} · monthly fees must be paid in order`
+                  ? `${selectedIds.size} fee(s) · ${selectedMethod.label} · wallet ₹${formatInr(wallet)}${
+                      shortfall > 0
+                        ? ` · shortfall ₹${formatInr(shortfall)}`
+                        : ' · covered by wallet'
+                    }`
                   : 'Select fees · choose Through method · pay earlier months first'}
               </p>
               <div className="student-fees-paybar__actions">
                 <Button
                   variant="outlined"
                   className="student-fees-paybar__method-btn"
-                  disabled={selectedIds.size === 0}
+                  disabled={selectedIds.size === 0 || paying}
                   onClick={(e) => setMethodAnchor(e.currentTarget)}
                   endIcon={<ArrowDropDownIcon />}
                 >
@@ -566,10 +661,10 @@ function StudentFeesTab({ student, status }) {
                 <Button
                   variant="contained"
                   className="student-fees-paybar__btn"
-                  disabled={selectedIds.size === 0}
+                  disabled={selectedIds.size === 0 || paying}
                   onClick={handlePayClick}
                 >
-                  PAY {formatPayAmount(selectedTotal)}/-
+                  {paying ? 'Paying…' : `PAY ${formatPayAmount(selectedTotal)}/-`}
                 </Button>
               </div>
             </div>
@@ -577,18 +672,85 @@ function StudentFeesTab({ student, status }) {
         </div>
       )}
 
+      <Dialog
+        open={payDialogOpen}
+        onClose={paying ? undefined : () => setPayDialogOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>
+          {payMethod === 'cash' ? 'Cash payment' : 'UPI payment'}
+        </DialogTitle>
+        <DialogContent sx={{ display: 'grid', gap: 2, pt: 1 }}>
+          <p style={{ margin: 0, color: '#3d5348', fontSize: 14 }}>
+            Selected ₹{formatInr(selectedTotal)} · Wallet ₹{formatInr(wallet)} ·
+            Credit shortfall <strong>₹{formatInr(shortfall)}</strong> then settle.
+          </p>
+          {payMethod === 'cash' ? (
+            <TextField
+              label="Receipt no"
+              value={receiptNo}
+              onChange={(e) => setReceiptNo(e.target.value)}
+              required
+              fullWidth
+              size="small"
+              autoFocus
+            />
+          ) : (
+            <TextField
+              label="UPI / UTR ref"
+              value={refNo}
+              onChange={(e) => setRefNo(e.target.value)}
+              required
+              fullWidth
+              size="small"
+              autoFocus
+            />
+          )}
+          <TextField
+            label="Remarks"
+            value={remarks}
+            onChange={(e) => setRemarks(e.target.value)}
+            fullWidth
+            size="small"
+            multiline
+            minRows={2}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={paying} onClick={() => setPayDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            disabled={paying}
+            onClick={handleConfirmCashUpi}
+          >
+            {paying ? 'Saving…' : 'Confirm & pay'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar
         open={Boolean(payHint)}
-        autoHideDuration={4000}
+        autoHideDuration={5000}
         onClose={() => setPayHint('')}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert severity="info" onClose={() => setPayHint('')} sx={{ width: '100%' }}>
+        <Alert
+          severity={paySeverity}
+          onClose={() => setPayHint('')}
+          sx={{ width: '100%' }}
+        >
           {payHint}
         </Alert>
       </Snackbar>
     </section>
   )
+}
+
+function round2(n) {
+  return Math.round((Number(n) || 0) * 100) / 100
 }
 
 export default function StudentDetailsPage() {
@@ -604,6 +766,13 @@ export default function StudentDetailsPage() {
   const [toast, setToast] = useState({ open: false, message: '', severity: 'info' })
   const [offRollOpen, setOffRollOpen] = useState(false)
   const [offRolling, setOffRolling] = useState(false)
+  const [walletOpen, setWalletOpen] = useState(false)
+  const [walletSaving, setWalletSaving] = useState(false)
+  const [walletMethod, setWalletMethod] = useState('cash')
+  const [walletAmount, setWalletAmount] = useState('')
+  const [walletReceipt, setWalletReceipt] = useState('')
+  const [walletRef, setWalletRef] = useState('')
+  const [walletRemarks, setWalletRemarks] = useState('')
 
   function showComingSoon(label) {
     setToast({ open: true, message: `${label} is coming soon.`, severity: 'info' })
@@ -611,6 +780,61 @@ export default function StudentDetailsPage() {
 
   function showToast(message, severity = 'info') {
     setToast({ open: true, message, severity })
+  }
+
+  function resetWalletForm() {
+    setWalletMethod('cash')
+    setWalletAmount('')
+    setWalletReceipt('')
+    setWalletRef('')
+    setWalletRemarks('')
+  }
+
+  function openAddWallet() {
+    resetWalletForm()
+    setWalletOpen(true)
+  }
+
+  async function handleAddWallet() {
+    const amount = Number(walletAmount)
+    if (!(amount > 0)) {
+      showToast('Enter a valid amount.', 'error')
+      return
+    }
+    if (walletMethod === 'cash' && !walletReceipt.trim()) {
+      showToast('Cash receipt number is required.', 'error')
+      return
+    }
+    if (walletMethod === 'upi' && !walletRef.trim()) {
+      showToast('UPI reference is required.', 'error')
+      return
+    }
+    setWalletSaving(true)
+    try {
+      const res = await adminAddToWallet({
+        st_id: Number(student.st_id),
+        amount,
+        method: walletMethod,
+        receipt_no: walletReceipt.trim(),
+        ref_no: walletRef.trim(),
+        remarks: walletRemarks.trim(),
+      })
+      if (Number(res.status) === 200) {
+        setWalletOpen(false)
+        resetWalletForm()
+        showToast(res.message || 'Wallet credited.', 'success')
+        await load(false)
+      } else {
+        showToast(res.message || 'Could not add to wallet.', 'error')
+      }
+    } catch {
+      showToast(
+        'Add-to-wallet API unavailable. Upload APIs/fees/add_to_wallet.php',
+        'error',
+      )
+    } finally {
+      setWalletSaving(false)
+    }
   }
 
   async function load(showSpinner = true) {
@@ -781,7 +1005,7 @@ export default function StudentDetailsPage() {
                 size="small"
                 variant="outlined"
                 startIcon={<AccountBalanceWalletOutlinedIcon />}
-                onClick={() => showComingSoon('Add money to wallet')}
+                onClick={openAddWallet}
               >
                 Add money to wallet
               </Button>
@@ -1161,7 +1385,11 @@ export default function StudentDetailsPage() {
           ) : null}
 
           {tab === 'pending' ? (
-            <StudentFeesTab student={student} status="pending" />
+            <StudentFeesTab
+              student={student}
+              status="pending"
+              onPaid={() => load(false)}
+            />
           ) : null}
 
           {tab === 'paid' ? (
@@ -1216,6 +1444,77 @@ export default function StudentDetailsPage() {
             }}
           >
             {offRolling ? 'Saving…' : 'Mark off-roll'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={walletOpen}
+        onClose={walletSaving ? undefined : () => setWalletOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Add money to wallet</DialogTitle>
+        <DialogContent sx={{ display: 'grid', gap: 2, pt: 1 }}>
+          <TextField
+            select
+            label="Method"
+            value={walletMethod}
+            onChange={(e) => setWalletMethod(e.target.value)}
+            size="small"
+            fullWidth
+          >
+            <MenuItem value="cash">Cash</MenuItem>
+            <MenuItem value="upi">UPI</MenuItem>
+          </TextField>
+          <TextField
+            label="Amount"
+            type="number"
+            value={walletAmount}
+            onChange={(e) => setWalletAmount(e.target.value)}
+            size="small"
+            fullWidth
+            inputProps={{ min: 0, step: '0.01' }}
+          />
+          {walletMethod === 'cash' ? (
+            <TextField
+              label="Receipt no"
+              value={walletReceipt}
+              onChange={(e) => setWalletReceipt(e.target.value)}
+              size="small"
+              fullWidth
+              required
+            />
+          ) : (
+            <TextField
+              label="UPI / UTR ref"
+              value={walletRef}
+              onChange={(e) => setWalletRef(e.target.value)}
+              size="small"
+              fullWidth
+              required
+            />
+          )}
+          <TextField
+            label="Remarks"
+            value={walletRemarks}
+            onChange={(e) => setWalletRemarks(e.target.value)}
+            size="small"
+            fullWidth
+            multiline
+            minRows={2}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={walletSaving} onClick={() => setWalletOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            disabled={walletSaving}
+            onClick={handleAddWallet}
+          >
+            {walletSaving ? 'Saving…' : 'Credit wallet'}
           </Button>
         </DialogActions>
       </Dialog>

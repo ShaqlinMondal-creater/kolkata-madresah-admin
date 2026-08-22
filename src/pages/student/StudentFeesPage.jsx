@@ -7,6 +7,7 @@ import Alert from '@mui/material/Alert'
 import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
 import { getStudentFees } from '@/services/studentPanelApi'
+import { studentPayFees } from '@/services/paymentsApi'
 import {
   formatPayAmount,
   isMonthlyFeeEnabled,
@@ -34,6 +35,9 @@ export default function StudentFeesPage({ status = 'pending' }) {
   const [currentAyId, setCurrentAyId] = useState(null)
   const [selectedIds, setSelectedIds] = useState(() => new Set())
   const [payHint, setPayHint] = useState('')
+  const [paySeverity, setPaySeverity] = useState('info')
+  const [paying, setPaying] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
 
   const displayFees = useMemo(
     () => sortFeesForPayment(fees.map(normalizeFeeForSelection)),
@@ -86,17 +90,45 @@ export default function StudentFeesPage({ status = 'pending' }) {
     return () => {
       alive = false
     }
-  }, [status, ayId])
+  }, [status, ayId, reloadKey])
 
   function handleToggleFee(fId) {
     setSelectedIds((prev) => toggleFeeSelection(displayFees, prev, fId))
   }
 
-  function handlePayClick() {
-    if (selectedIds.size === 0) return
-    setPayHint(
-      `Online payment for ₹${formatPayAmount(selectedTotal)}/- will be connected in the next step.`,
-    )
+  async function handlePayClick() {
+    if (selectedIds.size === 0 || paying) return
+    setPaying(true)
+    setPayHint('')
+    try {
+      const res = await studentPayFees([...selectedIds])
+      const statusCode = Number(res.status)
+      if (statusCode === 200) {
+        setPaySeverity('success')
+        setPayHint(
+          res.message ||
+            `Paid ₹${formatPayAmount(res.data?.paid_total ?? selectedTotal)}/- from wallet.`,
+        )
+        setSelectedIds(new Set())
+        setReloadKey((k) => k + 1)
+      } else if (statusCode === 501 || res.data?.needs_gateway) {
+        setPaySeverity('info')
+        setPayHint(
+          res.message ||
+            `Shortfall ₹${formatPayAmount(res.data?.shortfall)}/- — Online (Razorpay) comes next.`,
+        )
+      } else {
+        setPaySeverity('error')
+        setPayHint(res.message || 'Could not pay selected fees.')
+      }
+    } catch {
+      setPaySeverity('error')
+      setPayHint(
+        'Pay API unavailable. Upload APIs/student-panel/pay.php and APIs/fees/_pay_helpers.php',
+      )
+    } finally {
+      setPaying(false)
+    }
   }
 
   return (
@@ -226,10 +258,10 @@ export default function StudentFeesPage({ status = 'pending' }) {
                 <Button
                   variant="contained"
                   className="student-fees-paybar__btn"
-                  disabled={selectedIds.size === 0}
+                  disabled={selectedIds.size === 0 || paying}
                   onClick={handlePayClick}
                 >
-                  PAY {formatPayAmount(selectedTotal)}/-
+                  {paying ? 'Paying…' : `PAY ${formatPayAmount(selectedTotal)}/-`}
                 </Button>
               </div>
             </div>
@@ -243,7 +275,11 @@ export default function StudentFeesPage({ status = 'pending' }) {
         onClose={() => setPayHint('')}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert severity="info" onClose={() => setPayHint('')} sx={{ width: '100%' }}>
+        <Alert
+          severity={paySeverity}
+          onClose={() => setPayHint('')}
+          sx={{ width: '100%' }}
+        >
           {payHint}
         </Alert>
       </Snackbar>
