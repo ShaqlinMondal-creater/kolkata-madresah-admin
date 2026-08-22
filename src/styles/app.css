@@ -4179,6 +4179,25 @@
   text-transform: uppercase;
 }
 
+.st-detail-fees__check {
+  width: 2.75rem;
+  text-align: center;
+  padding-left: 0.45rem;
+  padding-right: 0.45rem;
+}
+
+.st-detail-fees__row--locked td {
+  opacity: 0.72;
+}
+
+.st-detail-fees__paybar {
+  margin-top: 0;
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+
 .st-detail-fees__pill {
   display: inline-flex;
   padding: 0.16rem 0.55rem;
@@ -5147,6 +5166,19 @@
   color: #1f4f3c !important;
   border-color: rgba(36, 92, 69, 0.45) !important;
   background: rgba(255, 255, 255, 0.72) !important;
+}
+
+.student-fees-paybar__method-static {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 0.9rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(36, 92, 69, 0.35);
+  background: rgba(255, 255, 255, 0.72);
+  color: #1f4f3c;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .student-fees-paybar__method-option {

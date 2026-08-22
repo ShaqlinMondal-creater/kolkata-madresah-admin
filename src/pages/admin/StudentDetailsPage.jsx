@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
+import Checkbox from '@mui/material/Checkbox'
 import CircularProgress from '@mui/material/CircularProgress'
 import Collapse from '@mui/material/Collapse'
 import Dialog from '@mui/material/Dialog'
@@ -9,12 +10,15 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
+import Menu from '@mui/material/Menu'
+import MenuItem from '@mui/material/MenuItem'
 import Snackbar from '@mui/material/Snackbar'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import Tooltip from '@mui/material/Tooltip'
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
 import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined'
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
@@ -29,6 +33,32 @@ import {
   offRollStudent,
 } from '@/services/studentsApi'
 import { useSwitchToStudent } from '@/hooks/useSwitchToStudent'
+import {
+  formatPayAmount,
+  isMonthlyFeeEnabled,
+  normalizeFeeForSelection,
+  sortFeesForPayment,
+  sumSelectedFees,
+  toggleFeeSelection,
+} from '@/utils/feeSelection'
+
+const ADMIN_PAYMENT_METHODS = [
+  {
+    id: 'online',
+    label: 'Online',
+    hint: 'Pay online via Razorpay (card, net banking, UPI, etc.).',
+  },
+  {
+    id: 'cash',
+    label: 'Cash',
+    hint: 'Record cash payment for this student.',
+  },
+  {
+    id: 'upi',
+    label: 'UPI',
+    hint: 'Record / collect via UPI.',
+  },
+]
 
 function formatInr(amount) {
   return Number(amount || 0).toLocaleString('en-IN', {
@@ -332,6 +362,28 @@ function StudentFeesTab({ student, status }) {
   const [error, setError] = useState('')
   const [fees, setFees] = useState([])
   const [ayName, setAyName] = useState('')
+  const [selectedIds, setSelectedIds] = useState(() => new Set())
+  const [payMethod, setPayMethod] = useState('online')
+  const [methodAnchor, setMethodAnchor] = useState(null)
+  const [payHint, setPayHint] = useState('')
+
+  const displayFees = useMemo(
+    () => sortFeesForPayment(fees.map(normalizeFeeForSelection)),
+    [fees],
+  )
+
+  const selectedTotal = useMemo(
+    () => sumSelectedFees(displayFees, selectedIds),
+    [displayFees, selectedIds],
+  )
+
+  const selectedMethod =
+    ADMIN_PAYMENT_METHODS.find((item) => item.id === payMethod) ||
+    ADMIN_PAYMENT_METHODS[0]
+
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [status, fees])
 
   useEffect(() => {
     let alive = true
@@ -377,6 +429,17 @@ function StudentFeesTab({ student, status }) {
     }
   }, [student?.st_id, student?.roll_no, student?.ay_id, student?.ay_name, status])
 
+  function handleToggleFee(fId) {
+    setSelectedIds((prev) => toggleFeeSelection(displayFees, prev, fId))
+  }
+
+  function handlePayClick() {
+    if (selectedIds.size === 0) return
+    setPayHint(
+      `${selectedMethod.label} payment for ₹${formatPayAmount(selectedTotal)}/- will be connected in the next step.`,
+    )
+  }
+
   return (
     <section className="st-detail__card st-detail-fees">
       <header className="st-detail__card-head">
@@ -406,6 +469,9 @@ function StudentFeesTab({ student, status }) {
           <table className="st-detail-fees__table">
             <thead>
               <tr>
+                {!isPaid ? (
+                  <th className="st-detail-fees__check" aria-label="Select" />
+                ) : null}
                 <th>Fee</th>
                 <th>Amount</th>
                 {!isPaid ? <th>Due date</th> : <th>Paid date</th>}
@@ -415,32 +481,127 @@ function StudentFeesTab({ student, status }) {
               </tr>
             </thead>
             <tbody>
-              {fees.map((fee) => (
-                <tr key={fee.f_id}>
-                  <td>{fee.fpp_name || '—'}</td>
-                  <td>₹{formatInr(fee.fee_amount_net ?? fee.fpp_amount)}</td>
-                  <td>
-                    {isPaid
-                      ? fee.f_paid_date || '—'
-                      : fee.fpp_due_date || '—'}
-                  </td>
-                  <td>₹{formatInr(fee.late_fee_applicable)}</td>
-                  <td>
-                    <strong>₹{formatInr(fee.total_amount)}</strong>
-                  </td>
-                  <td>
-                    <span
-                      className={`st-detail-fees__pill st-detail-fees__pill--${fee.status || status}`}
-                    >
-                      {fee.status_label || (isPaid ? 'Paid' : 'Pending')}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {displayFees.map((fee) => {
+                const checked = selectedIds.has(fee.f_id)
+                const monthlyEnabled =
+                  !fee.is_monthly ||
+                  isMonthlyFeeEnabled(displayFees, selectedIds, fee.f_id)
+
+                return (
+                  <tr
+                    key={fee.f_id}
+                    className={
+                      !isPaid && fee.is_monthly && !monthlyEnabled
+                        ? 'st-detail-fees__row--locked'
+                        : undefined
+                    }
+                  >
+                    {!isPaid ? (
+                      <td className="st-detail-fees__check">
+                        <Checkbox
+                          size="small"
+                          checked={checked}
+                          disabled={!monthlyEnabled}
+                          onChange={() => handleToggleFee(fee.f_id)}
+                          inputProps={{
+                            'aria-label': `Select ${fee.fpp_name || 'fee'}`,
+                          }}
+                          sx={{
+                            color: '#8a6b2a',
+                            '&.Mui-checked': { color: '#245c45' },
+                            '&.Mui-disabled': { opacity: 0.45 },
+                          }}
+                        />
+                      </td>
+                    ) : null}
+                    <td>{fee.fpp_name || '—'}</td>
+                    <td>₹{formatInr(fee.fee_amount_net ?? fee.fpp_amount)}</td>
+                    <td>
+                      {isPaid
+                        ? fee.f_paid_date || '—'
+                        : fee.fpp_due_date || '—'}
+                    </td>
+                    <td>₹{formatInr(fee.late_fee_applicable)}</td>
+                    <td>
+                      <strong>₹{formatInr(fee.total)}</strong>
+                    </td>
+                    <td>
+                      <span
+                        className={`st-detail-fees__pill st-detail-fees__pill--${fee.status || status}`}
+                      >
+                        {fee.status_label || (isPaid ? 'Paid' : 'Pending')}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
+
+          {!isPaid ? (
+            <div className="student-fees-paybar st-detail-fees__paybar">
+              <p className="student-fees-paybar__hint">
+                {selectedIds.size > 0
+                  ? `${selectedIds.size} fee(s) · ${selectedMethod.label} · monthly fees must be paid in order`
+                  : 'Select fees · choose Through method · pay earlier months first'}
+              </p>
+              <div className="student-fees-paybar__actions">
+                <Button
+                  variant="outlined"
+                  className="student-fees-paybar__method-btn"
+                  disabled={selectedIds.size === 0}
+                  onClick={(e) => setMethodAnchor(e.currentTarget)}
+                  endIcon={<ArrowDropDownIcon />}
+                >
+                  Through: {selectedMethod.label}
+                </Button>
+                <Menu
+                  anchorEl={methodAnchor}
+                  open={Boolean(methodAnchor)}
+                  onClose={() => setMethodAnchor(null)}
+                  anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                  transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                >
+                  {ADMIN_PAYMENT_METHODS.map((item) => (
+                    <MenuItem
+                      key={item.id}
+                      selected={payMethod === item.id}
+                      onClick={() => {
+                        setPayMethod(item.id)
+                        setMethodAnchor(null)
+                      }}
+                    >
+                      <span className="student-fees-paybar__method-option">
+                        <strong>{item.label}</strong>
+                        <small>{item.hint}</small>
+                      </span>
+                    </MenuItem>
+                  ))}
+                </Menu>
+                <Button
+                  variant="contained"
+                  className="student-fees-paybar__btn"
+                  disabled={selectedIds.size === 0}
+                  onClick={handlePayClick}
+                >
+                  PAY {formatPayAmount(selectedTotal)}/-
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
+
+      <Snackbar
+        open={Boolean(payHint)}
+        autoHideDuration={4000}
+        onClose={() => setPayHint('')}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="info" onClose={() => setPayHint('')} sx={{ width: '100%' }}>
+          {payHint}
+        </Alert>
+      </Snackbar>
     </section>
   )
 }
