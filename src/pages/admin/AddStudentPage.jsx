@@ -14,6 +14,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { getAcademicYears } from '@/services/academicYearApi'
 import { getClassesByYear } from '@/services/classesApi'
 import { createStudent } from '@/services/studentsApi'
+import { formatDobInput, isValidDob } from '@/utils/dobInput'
+import { usePincodeLookup } from '@/hooks/usePincodeLookup'
 
 const STEPS = ['Student details', 'Father details', 'Mother details']
 
@@ -46,7 +48,7 @@ const emptyForm = {
     gender: '',
     dob: '',
     roll_no: '',
-    bohra: '',
+    bohra: '1',
     its_id: '',
     email: '',
     mobile: '',
@@ -97,12 +99,15 @@ const emptyForm = {
   },
 }
 
-function Field({ label, required, error, children }) {
+function Field({ label, required, optional, error, children }) {
   return (
     <label className={`add-student__field${error ? ' add-student__field--invalid' : ''}`}>
       <span className="add-student__label">
         {label}
         {required ? <em>*</em> : null}
+        {optional && !required ? (
+          <span className="add-student__optional">optional</span>
+        ) : null}
       </span>
       {children}
       {error ? <span className="add-student__field-error">{error}</span> : null}
@@ -125,8 +130,10 @@ function getStepErrors(step, form) {
     if (!s.last_name.trim()) errors['student.last_name'] = 'Required'
     if (!s.gender) errors['student.gender'] = 'Required'
     if (!s.roll_no.trim()) errors['student.roll_no'] = 'Required'
-    if (s.bohra !== '0' && s.bohra !== '1') errors['student.bohra'] = 'Required'
     if (!s.its_id.trim()) errors['student.its_id'] = 'Required'
+    if (s.dob.trim() && !isValidDob(s.dob.trim())) {
+      errors['student.dob'] = 'Use a valid date (DD-MM-YYYY)'
+    }
   }
 
   if (step === 1) {
@@ -154,6 +161,24 @@ function PersonStepFields({ prefix, form, setForm, occupationOptions, errors = {
       [prefix]: { ...prev[prefix], [key]: value },
     }))
   }
+
+  function setMany(patch) {
+    setForm((prev) => ({
+      ...prev,
+      [prefix]: { ...prev[prefix], ...patch },
+    }))
+  }
+
+  const { loading: pinLoading, error: pinError } = usePincodeLookup(
+    employed || selfEmployed ? block.pincode : '',
+    (result) => {
+      setMany({
+        city: result.city,
+        state: result.state,
+        country: result.country,
+      })
+    },
+  )
 
   return (
     <div className="add-student__grid">
@@ -184,7 +209,7 @@ function PersonStepFields({ prefix, form, setForm, occupationOptions, errors = {
           inputMode="tel"
         />
       </Field>
-      <Field label="Email">
+      <Field label="Email" optional>
         <TextField
           size="small"
           sx={fieldSx}
@@ -193,7 +218,7 @@ function PersonStepFields({ prefix, form, setForm, occupationOptions, errors = {
           type="email"
         />
       </Field>
-      <Field label="Occupation">
+      <Field label="Occupation" optional>
         <TextField
           select
           size="small"
@@ -211,7 +236,7 @@ function PersonStepFields({ prefix, form, setForm, occupationOptions, errors = {
 
       {employed ? (
         <>
-          <Field label="Employer">
+          <Field label="Employer" optional>
             <TextField
               size="small"
               sx={fieldSx}
@@ -219,7 +244,7 @@ function PersonStepFields({ prefix, form, setForm, occupationOptions, errors = {
               onChange={(e) => set('employer', e.target.value)}
             />
           </Field>
-          <Field label="Designation">
+          <Field label="Designation" optional>
             <TextField
               size="small"
               sx={fieldSx}
@@ -232,7 +257,7 @@ function PersonStepFields({ prefix, form, setForm, occupationOptions, errors = {
 
       {selfEmployed ? (
         <>
-          <Field label="Business name">
+          <Field label="Business name" optional>
             <TextField
               size="small"
               sx={fieldSx}
@@ -240,7 +265,7 @@ function PersonStepFields({ prefix, form, setForm, occupationOptions, errors = {
               onChange={(e) => set('business_name', e.target.value)}
             />
           </Field>
-          <Field label="Business nature">
+          <Field label="Business nature" optional>
             <TextField
               size="small"
               sx={fieldSx}
@@ -253,7 +278,7 @@ function PersonStepFields({ prefix, form, setForm, occupationOptions, errors = {
 
       {employed || selfEmployed ? (
         <>
-          <Field label="Address line 1">
+          <Field label="Address line 1" optional>
             <TextField
               size="small"
               sx={fieldSx}
@@ -261,7 +286,7 @@ function PersonStepFields({ prefix, form, setForm, occupationOptions, errors = {
               onChange={(e) => set('address_line1', e.target.value)}
             />
           </Field>
-          <Field label="Address line 2">
+          <Field label="Address line 2" optional>
             <TextField
               size="small"
               sx={fieldSx}
@@ -269,7 +294,7 @@ function PersonStepFields({ prefix, form, setForm, occupationOptions, errors = {
               onChange={(e) => set('address_line2', e.target.value)}
             />
           </Field>
-          <Field label="City">
+          <Field label="City" optional>
             <TextField
               size="small"
               sx={fieldSx}
@@ -277,7 +302,7 @@ function PersonStepFields({ prefix, form, setForm, occupationOptions, errors = {
               onChange={(e) => set('city', e.target.value)}
             />
           </Field>
-          <Field label="State">
+          <Field label="State" optional>
             <TextField
               size="small"
               sx={fieldSx}
@@ -285,7 +310,7 @@ function PersonStepFields({ prefix, form, setForm, occupationOptions, errors = {
               onChange={(e) => set('state', e.target.value)}
             />
           </Field>
-          <Field label="Country">
+          <Field label="Country" optional>
             <TextField
               size="small"
               sx={fieldSx}
@@ -293,12 +318,18 @@ function PersonStepFields({ prefix, form, setForm, occupationOptions, errors = {
               onChange={(e) => set('country', e.target.value)}
             />
           </Field>
-          <Field label="Pincode">
+          <Field label="Pincode" optional error={pinError}>
             <TextField
               size="small"
               sx={fieldSx}
               value={block.pincode}
-              onChange={(e) => set('pincode', e.target.value)}
+              onChange={(e) =>
+                set('pincode', e.target.value.replace(/\D+/g, '').slice(0, 6))
+              }
+              inputMode="numeric"
+              placeholder="6-digit PIN"
+              helperText={pinLoading ? 'Looking up city / state…' : ' '}
+              FormHelperTextProps={{ sx: { minHeight: '1.1em', m: 0 } }}
             />
           </Field>
         </>
@@ -417,6 +448,24 @@ export default function AddStudentPage() {
     }))
   }
 
+  function setAddressMany(patch) {
+    setForm((prev) => ({
+      ...prev,
+      address: { ...prev.address, ...patch },
+    }))
+  }
+
+  const { loading: addressPinLoading, error: addressPinError } = usePincodeLookup(
+    form.address.pincode,
+    (result) => {
+      setAddressMany({
+        city: result.city,
+        state: result.state,
+        country: result.country,
+      })
+    },
+  )
+
   function goNext() {
     setError('')
     setStep((s) => Math.min(s + 1, STEPS.length - 1))
@@ -434,7 +483,10 @@ export default function AddStudentPage() {
     try {
       const res = await createStudent({
         cg_id: Number(form.cg_id),
-        student: form.student,
+        student: {
+          ...form.student,
+          bohra: form.student.bohra === '0' ? '0' : '1',
+        },
         address: form.address,
         father: form.father,
         mother: form.mother,
@@ -593,13 +645,19 @@ export default function AddStudentPage() {
                   <MenuItem value="F">Female</MenuItem>
                 </TextField>
               </Field>
-              <Field label="Date of birth">
+              <Field
+                label="Date of birth"
+                optional
+                error={fieldError(visibleFieldErrors, 'student.dob')}
+              >
                 <TextField
                   size="small"
                   sx={fieldSx}
                   placeholder="DD-MM-YYYY"
                   value={form.student.dob}
-                  onChange={(e) => setStudent('dob', e.target.value)}
+                  error={Boolean(fieldError(visibleFieldErrors, 'student.dob'))}
+                  onChange={(e) => setStudent('dob', formatDobInput(e.target.value))}
+                  inputMode="numeric"
                 />
               </Field>
               <Field
@@ -615,22 +673,16 @@ export default function AddStudentPage() {
                   onChange={(e) => setStudent('roll_no', e.target.value)}
                 />
               </Field>
-              <Field
-                label="Bohra"
-                required
-                error={fieldError(visibleFieldErrors, 'student.bohra')}
-              >
+              <Field label="Bohra" optional>
                 <TextField
                   select
                   size="small"
                   sx={fieldSx}
-                  value={form.student.bohra}
-                  error={Boolean(fieldError(visibleFieldErrors, 'student.bohra'))}
+                  value={form.student.bohra || '1'}
                   onChange={(e) => setStudent('bohra', e.target.value)}
                 >
-                  <MenuItem value="">Select</MenuItem>
-                  <MenuItem value="1">Yes</MenuItem>
-                  <MenuItem value="0">No</MenuItem>
+                  <MenuItem value="1">Yes (Bohra)</MenuItem>
+                  <MenuItem value="0">No (Non Bohra)</MenuItem>
                 </TextField>
               </Field>
               <Field
@@ -646,7 +698,7 @@ export default function AddStudentPage() {
                   onChange={(e) => setStudent('its_id', e.target.value)}
                 />
               </Field>
-              <Field label="Email">
+              <Field label="Email" optional>
                 <TextField
                   size="small"
                   sx={fieldSx}
@@ -664,7 +716,7 @@ export default function AddStudentPage() {
                   inputMode="tel"
                 />
               </Field>
-              <Field label="Blood group">
+              <Field label="Blood group" optional>
                 <TextField
                   size="small"
                   sx={fieldSx}
@@ -672,7 +724,7 @@ export default function AddStudentPage() {
                   onChange={(e) => setStudent('blood_group', e.target.value)}
                 />
               </Field>
-              <Field label="Aadhaar no">
+              <Field label="Aadhaar no" optional>
                 <TextField
                   size="small"
                   sx={fieldSx}
@@ -688,7 +740,7 @@ export default function AddStudentPage() {
                   onChange={(e) => setAddress('line1', e.target.value)}
                 />
               </Field>
-              <Field label="Address line 2">
+              <Field label="Address line 2" optional>
                 <TextField
                   size="small"
                   sx={fieldSx}
@@ -720,12 +772,23 @@ export default function AddStudentPage() {
                   onChange={(e) => setAddress('country', e.target.value)}
                 />
               </Field>
-              <Field label="Pincode">
+              <Field label="Pincode" optional error={addressPinError}>
                 <TextField
                   size="small"
                   sx={fieldSx}
                   value={form.address.pincode}
-                  onChange={(e) => setAddress('pincode', e.target.value)}
+                  onChange={(e) =>
+                    setAddress(
+                      'pincode',
+                      e.target.value.replace(/\D+/g, '').slice(0, 6),
+                    )
+                  }
+                  inputMode="numeric"
+                  placeholder="6-digit PIN"
+                  helperText={
+                    addressPinLoading ? 'Looking up city / state…' : ' '
+                  }
+                  FormHelperTextProps={{ sx: { minHeight: '1.1em', m: 0 } }}
                 />
               </Field>
             </div>

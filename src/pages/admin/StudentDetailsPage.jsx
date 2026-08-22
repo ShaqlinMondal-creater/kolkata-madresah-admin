@@ -41,6 +41,8 @@ import {
   sumSelectedFees,
   toggleFeeSelection,
 } from '@/utils/feeSelection'
+import { formatDobInput, isValidDob } from '@/utils/dobInput'
+import { usePincodeLookup } from '@/hooks/usePincodeLookup'
 
 const ADMIN_PAYMENT_METHODS = [
   {
@@ -70,61 +72,6 @@ function dash(value) {
   if (value === null || value === undefined) return '—'
   const text = String(value).trim()
   return text !== '' ? text : '—'
-}
-
-function formatDobInput(value) {
-  let digits = String(value ?? '').replace(/\D+/g, '').slice(0, 8)
-
-  // Clamp day (positions 0-1)
-  if (digits.length >= 1) {
-    const d0 = Number(digits[0])
-    if (d0 > 3) digits = '0' + d0 + digits.slice(2)
-  }
-  if (digits.length >= 2) {
-    const day = Number(digits.slice(0, 2))
-    if (day === 0) digits = '01' + digits.slice(2)
-    else if (day > 31) digits = '31' + digits.slice(2)
-  }
-
-  // Clamp month (positions 2-3)
-  if (digits.length >= 3) {
-    const m0 = Number(digits[2])
-    if (m0 > 1) digits = digits.slice(0, 2) + '0' + m0 + digits.slice(4)
-  }
-  if (digits.length >= 4) {
-    const month = Number(digits.slice(2, 4))
-    if (month === 0) digits = digits.slice(0, 2) + '01' + digits.slice(4)
-    else if (month > 12) digits = digits.slice(0, 2) + '12' + digits.slice(4)
-  }
-
-  // Clamp year first digit (positions 4): only 1 or 2
-  if (digits.length >= 5) {
-    const y0 = Number(digits[4])
-    if (y0 !== 1 && y0 !== 2) digits = digits.slice(0, 4) + '2' + digits.slice(5)
-  }
-
-  digits = digits.slice(0, 8)
-
-  if (digits.length <= 2) return digits
-  if (digits.length <= 4) return `${digits.slice(0, 2)}-${digits.slice(2)}`
-  return `${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4)}`
-}
-
-function isValidDob(str) {
-  const m = String(str || '').match(/^(\d{2})-(\d{2})-(\d{4})$/)
-  if (!m) return false
-  const day = Number(m[1])
-  const month = Number(m[2])
-  const year = Number(m[3])
-  if (month < 1 || month > 12) return false
-  if (day < 1 || day > 31) return false
-  if (year < 1920 || year > new Date().getFullYear()) return false
-  const d = new Date(year, month - 1, day)
-  return (
-    d.getFullYear() === year &&
-    d.getMonth() === month - 1 &&
-    d.getDate() === day
-  )
 }
 
 const FATHER_OCC = [
@@ -162,12 +109,16 @@ function InlineField({
   displayValue = null,
   inputMode = 'text',
   formatDraft = null,
+  optional = false,
+  /** When set, 6-digit PIN auto-fills these related update field keys */
+  pincodeFill = null,
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value ?? '')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
   const inputRef = useRef(null)
+  const isPincodeField = Boolean(pincodeFill) || String(fieldKey).endsWith('.pincode') || fieldKey === 'pincode'
 
   useEffect(() => {
     if (!editing) setDraft(value ?? '')
@@ -181,6 +132,27 @@ function InlineField({
       }
     }
   }, [editing, type])
+
+  const { loading: pinLoading, error: pinError } = usePincodeLookup(
+    editing && pincodeFill ? draft : '',
+    async (result) => {
+      if (!pincodeFill || !stId) return
+      try {
+        const updates = [
+          [pincodeFill.city, result.city],
+          [pincodeFill.state, result.state],
+          [pincodeFill.country, result.country],
+        ]
+        for (const [key, val] of updates) {
+          if (!key || !val) continue
+          await updateStudentField(stId, key, val)
+        }
+        await onSaved?.()
+      } catch {
+        // keep typing; user can still edit city/state manually
+      }
+    },
+  )
 
   async function save() {
     const next = String(draft ?? '').trim()
@@ -220,11 +192,15 @@ function InlineField({
   }
 
   const shown = displayValue != null ? displayValue : value
+  const shownError = err || (editing && pinError ? pinError : '')
 
   return (
     <div className={`st-inline${editing ? ' is-editing' : ''}${!shown || String(shown).trim() === '' ? ' is-empty' : ''}`}>
       <div className="st-inline__top">
-        <span className="st-inline__label">{label}</span>
+        <span className="st-inline__label">
+          {label}
+          {optional ? <span className="st-inline__optional">optional</span> : null}
+        </span>
         {!editing ? (
           <Tooltip title={`Edit ${label}`}>
             <IconButton
@@ -264,11 +240,17 @@ function InlineField({
               <input
                 ref={inputRef}
                 value={draft}
-                onChange={(e) =>
-                  setDraft(formatDraft ? formatDraft(e.target.value) : e.target.value)
-                }
-                placeholder={placeholder || 'Type here…'}
-                inputMode={inputMode}
+                onChange={(e) => {
+                  let next = formatDraft
+                    ? formatDraft(e.target.value)
+                    : e.target.value
+                  if (isPincodeField) {
+                    next = String(next).replace(/\D+/g, '').slice(0, 6)
+                  }
+                  setDraft(next)
+                }}
+                placeholder={placeholder || (isPincodeField ? '6-digit PIN' : 'Type here…')}
+                inputMode={isPincodeField ? 'numeric' : inputMode}
                 disabled={saving}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -290,10 +272,10 @@ function InlineField({
                   type="button"
                   className="st-inline__btn st-inline__btn--save"
                   onClick={save}
-                  disabled={saving}
+                  disabled={saving || pinLoading}
                   aria-label={`Save ${label}`}
                 >
-                  {saving ? (
+                  {saving || pinLoading ? (
                     <CircularProgress size={14} color="inherit" />
                   ) : (
                     <CheckOutlinedIcon fontSize="inherit" />
@@ -325,7 +307,10 @@ function InlineField({
           <strong>{dash(shown)}</strong>
         </button>
       )}
-      {err ? <p className="st-inline__error">{err}</p> : null}
+      {shownError ? <p className="st-inline__error">{shownError}</p> : null}
+      {editing && pinLoading ? (
+        <p className="st-inline__hint">Looking up city / state…</p>
+      ) : null}
     </div>
   )
 }
@@ -829,6 +814,7 @@ export default function StudentDetailsPage() {
               onSaved={refresh}
               type="select"
               options={YES_NO}
+              optional
             />
             <InlineField
               label="On-roll"
@@ -875,6 +861,7 @@ export default function StudentDetailsPage() {
               stId={student.st_id}
               onSaved={refresh}
               inputMode="email"
+              optional
             />
             <InlineField
               label="ITS"
@@ -890,6 +877,7 @@ export default function StudentDetailsPage() {
               stId={student.st_id}
               onSaved={refresh}
               placeholder="e.g. B+"
+              optional
             />
             <InlineField
               label="Aadhaar No"
@@ -898,6 +886,7 @@ export default function StudentDetailsPage() {
               stId={student.st_id}
               onSaved={refresh}
               inputMode="numeric"
+              optional
             />
             <InlineField
               label="Address Line 1"
@@ -912,6 +901,7 @@ export default function StudentDetailsPage() {
               fieldKey="address.line2"
               stId={student.st_id}
               onSaved={refresh}
+              optional
             />
             <InlineField
               label="City"
@@ -941,6 +931,12 @@ export default function StudentDetailsPage() {
               stId={student.st_id}
               onSaved={refresh}
               inputMode="numeric"
+              optional
+              pincodeFill={{
+                city: 'address.city',
+                state: 'address.state',
+                country: 'address.country',
+              }}
             />
           </DetailSection>
 
@@ -968,6 +964,7 @@ export default function StudentDetailsPage() {
               stId={student.st_id}
               onSaved={refresh}
               inputMode="email"
+              optional
             />
             <InlineField
               label="Occupation"
@@ -978,6 +975,7 @@ export default function StudentDetailsPage() {
               onSaved={refresh}
               type="select"
               options={FATHER_OCC}
+              optional
             />
             <InlineField
               label="Business / Employer"
@@ -985,6 +983,7 @@ export default function StudentDetailsPage() {
               fieldKey="father.employer_or_business"
               stId={student.st_id}
               onSaved={refresh}
+              optional
             />
             <InlineField
               label="Nature / Designation"
@@ -992,6 +991,7 @@ export default function StudentDetailsPage() {
               fieldKey="father.nature_or_designation"
               stId={student.st_id}
               onSaved={refresh}
+              optional
             />
             <InlineField
               label="Address Line 1"
@@ -999,6 +999,7 @@ export default function StudentDetailsPage() {
               fieldKey="father.address_line1"
               stId={student.st_id}
               onSaved={refresh}
+              optional
             />
             <InlineField
               label="Address Line 2"
@@ -1006,6 +1007,7 @@ export default function StudentDetailsPage() {
               fieldKey="father.address_line2"
               stId={student.st_id}
               onSaved={refresh}
+              optional
             />
             <InlineField
               label="City"
@@ -1013,6 +1015,7 @@ export default function StudentDetailsPage() {
               fieldKey="father.city"
               stId={student.st_id}
               onSaved={refresh}
+              optional
             />
             <InlineField
               label="State"
@@ -1020,6 +1023,7 @@ export default function StudentDetailsPage() {
               fieldKey="father.state"
               stId={student.st_id}
               onSaved={refresh}
+              optional
             />
             <InlineField
               label="Country"
@@ -1027,6 +1031,7 @@ export default function StudentDetailsPage() {
               fieldKey="father.country"
               stId={student.st_id}
               onSaved={refresh}
+              optional
             />
             <InlineField
               label="Pincode"
@@ -1035,6 +1040,12 @@ export default function StudentDetailsPage() {
               stId={student.st_id}
               onSaved={refresh}
               inputMode="numeric"
+              optional
+              pincodeFill={{
+                city: 'father.city',
+                state: 'father.state',
+                country: 'father.country',
+              }}
             />
           </DetailSection>
 
@@ -1062,6 +1073,7 @@ export default function StudentDetailsPage() {
               stId={student.st_id}
               onSaved={refresh}
               inputMode="email"
+              optional
             />
             <InlineField
               label="Occupation"
@@ -1072,6 +1084,7 @@ export default function StudentDetailsPage() {
               onSaved={refresh}
               type="select"
               options={MOTHER_OCC}
+              optional
             />
             <InlineField
               label="Business / Employer"
@@ -1079,6 +1092,7 @@ export default function StudentDetailsPage() {
               fieldKey="mother.employer_or_business"
               stId={student.st_id}
               onSaved={refresh}
+              optional
             />
             <InlineField
               label="Nature / Designation"
@@ -1086,6 +1100,7 @@ export default function StudentDetailsPage() {
               fieldKey="mother.nature_or_designation"
               stId={student.st_id}
               onSaved={refresh}
+              optional
             />
             <InlineField
               label="Address Line 1"
@@ -1093,6 +1108,7 @@ export default function StudentDetailsPage() {
               fieldKey="mother.address_line1"
               stId={student.st_id}
               onSaved={refresh}
+              optional
             />
             <InlineField
               label="Address Line 2"
@@ -1100,6 +1116,7 @@ export default function StudentDetailsPage() {
               fieldKey="mother.address_line2"
               stId={student.st_id}
               onSaved={refresh}
+              optional
             />
             <InlineField
               label="City"
@@ -1107,6 +1124,7 @@ export default function StudentDetailsPage() {
               fieldKey="mother.city"
               stId={student.st_id}
               onSaved={refresh}
+              optional
             />
             <InlineField
               label="State"
@@ -1114,6 +1132,7 @@ export default function StudentDetailsPage() {
               fieldKey="mother.state"
               stId={student.st_id}
               onSaved={refresh}
+              optional
             />
             <InlineField
               label="Country"
@@ -1121,6 +1140,7 @@ export default function StudentDetailsPage() {
               fieldKey="mother.country"
               stId={student.st_id}
               onSaved={refresh}
+              optional
             />
             <InlineField
               label="Pincode"
@@ -1129,6 +1149,12 @@ export default function StudentDetailsPage() {
               stId={student.st_id}
               onSaved={refresh}
               inputMode="numeric"
+              optional
+              pincodeFill={{
+                city: 'mother.city',
+                state: 'mother.state',
+                country: 'mother.country',
+              }}
             />
           </DetailSection>
             </>
