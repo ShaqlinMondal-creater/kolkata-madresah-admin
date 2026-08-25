@@ -7,7 +7,8 @@ import Alert from '@mui/material/Alert'
 import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
 import { getStudentFees } from '@/services/studentPanelApi'
-import { studentPayFees } from '@/services/paymentsApi'
+import { createRazorpayOrder, verifyRazorpayPayment } from '@/services/paymentsApi'
+import { openRazorpayCheckout } from '@/utils/razorpayCheckout'
 import {
   formatPayAmount,
   isMonthlyFeeEnabled,
@@ -101,31 +102,52 @@ export default function StudentFeesPage({ status = 'pending' }) {
     setPaying(true)
     setPayHint('')
     try {
-      const res = await studentPayFees([...selectedIds])
-      const statusCode = Number(res.status)
-      if (statusCode === 200) {
+      const orderRes = await createRazorpayOrder({
+        fIds: [...selectedIds],
+      })
+      const statusCode = Number(orderRes.status)
+      if (statusCode === 200 && !orderRes.data?.needs_gateway) {
         setPaySeverity('success')
         setPayHint(
-          res.message ||
-            `Paid ₹${formatPayAmount(res.data?.paid_total ?? selectedTotal)}/- from wallet.`,
+          orderRes.message ||
+            `Paid ₹${formatPayAmount(orderRes.data?.paid_total ?? selectedTotal)}/- from wallet.`,
         )
         setSelectedIds(new Set())
         setReloadKey((k) => k + 1)
-      } else if (statusCode === 501 || res.data?.needs_gateway) {
-        setPaySeverity('info')
+        return
+      }
+      if (statusCode !== 200 || !orderRes.data?.order_id) {
+        setPaySeverity('error')
+        setPayHint(orderRes.message || 'Could not start online payment.')
+        return
+      }
+
+      const checkout = await openRazorpayCheckout(orderRes.data)
+      const verifyRes = await verifyRazorpayPayment(checkout)
+      if (Number(verifyRes.status) === 200) {
+        setPaySeverity('success')
         setPayHint(
-          res.message ||
-            `Shortfall ₹${formatPayAmount(res.data?.shortfall)}/- — Online (Razorpay) comes next.`,
+          verifyRes.message ||
+            `Paid ₹${formatPayAmount(verifyRes.data?.paid_total ?? selectedTotal)}/- online.`,
         )
+        setSelectedIds(new Set())
+        setReloadKey((k) => k + 1)
       } else {
         setPaySeverity('error')
-        setPayHint(res.message || 'Could not pay selected fees.')
+        setPayHint(verifyRes.message || 'Could not confirm online payment.')
       }
-    } catch {
-      setPaySeverity('error')
-      setPayHint(
-        'Pay API unavailable. Upload APIs/student-panel/pay.php and APIs/fees/_pay_helpers.php',
-      )
+    } catch (err) {
+      const msg = err?.message || ''
+      if (msg === 'Payment cancelled.') {
+        setPaySeverity('info')
+        setPayHint('Payment cancelled.')
+      } else {
+        setPaySeverity('error')
+        setPayHint(
+          msg ||
+            'Online pay unavailable. Upload APIs/fees/razorpay_order.php and razorpay_verify.php',
+        )
+      }
     } finally {
       setPaying(false)
     }

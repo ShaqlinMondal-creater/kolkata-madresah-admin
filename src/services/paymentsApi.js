@@ -38,3 +38,21 @@ export async function studentPayFees(fIds) {
     f_ids: (fIds || []).map(Number).filter((id) => id > 0),
   })
 }
+
+/** Create Razorpay order (keys from razorpay table status = 1) */
+export async function createRazorpayOrder({ stId, fIds }) {
+  const body = {
+    f_ids: (fIds || []).map(Number).filter((id) => id > 0),
+  }
+  if (stId) body.st_id = Number(stId)
+  return postJson('/fees/razorpay_order.php', body)
+}
+
+/** Verify checkout payload and settle fees */
+export async function verifyRazorpayPayment(payload) {
+  return postJson('/fees/razorpay_verify.php', {
+    razorpay_order_id: payload.razorpay_order_id,
+    razorpay_payment_id: payload.razorpay_payment_id,
+    razorpay_signature: payload.razorpay_signature,
+  })
+}
