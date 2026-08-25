@@ -121,7 +121,7 @@ export async function updateStudentField(stId, field, value) {
   return parseJson(response)
 }
 
-/** Upgrade student(s) to target class — blocks if unpaid fees in source year */
+/** Upgrade student(s) to target class — pending fees do not block */
 export async function upgradeStudents({
   stIds = [],
   filters = null,

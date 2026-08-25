@@ -145,8 +145,8 @@ export default function StudentClassActionDialog({
         <p className="student-action-dialog__hint">{countLabel}</p>
         {isUpgrade ? (
           <p className="student-action-dialog__note">
-            Unpaid fees in the selected academic year will block upgrade for that
-            student (same as old system).
+            Pending fees do not block upgrade. Unpaid amounts stay on the
+            student after they move class.
           </p>
         ) : (
           <p className="student-action-dialog__note">
