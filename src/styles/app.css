@@ -2175,9 +2175,9 @@
   grid-template-columns:
     minmax(210px, 1.7fr)
     minmax(7.4rem, 0.7fr)
-    minmax(7.4rem, 0.7fr)
     var(--filter-sm)
-    minmax(8.2rem, 0.85fr);
+    minmax(8.2rem, 0.85fr)
+    auto;
 }
 
 .students-filters__row--secondary {
@@ -2185,7 +2185,6 @@
     var(--filter-sm)
     var(--filter-sm)
     minmax(9rem, 11.5rem)
-    auto
     1fr;
 }
 
@@ -2205,6 +2204,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 0.4rem;
   min-height: 2.5rem;
 }
 

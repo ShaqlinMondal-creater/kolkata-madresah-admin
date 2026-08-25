@@ -963,11 +963,6 @@ export default function StudentDetailsPage() {
               </p>
               <div className="st-detail-hero__chips">
                 <span
-                  className={`st-chip ${student.is_bohra ? 'is-on' : 'is-off'}`}
-                >
-                  {student.is_bohra ? 'Bohra' : 'Non Bohra'}
-                </span>
-                <span
                   className={`st-chip ${student.on_roll ? 'is-on' : 'is-muted'}`}
                 >
                   {student.on_roll ? 'On-roll' : 'Off-roll'}
@@ -1029,17 +1024,6 @@ export default function StudentDetailsPage() {
             hint="Click the pen to edit a field · Enter to save · Esc to cancel"
             defaultOpen
           >
-            <InlineField
-              label="Bohra"
-              value={student.st_bohra === '1' ? '1' : '0'}
-              displayValue={student.is_bohra ? 'Yes' : 'No'}
-              fieldKey="st_bohra"
-              stId={student.st_id}
-              onSaved={refresh}
-              type="select"
-              options={YES_NO}
-              optional
-            />
             <InlineField
               label="On-roll"
               value={student.st_on_roll === '1' ? '1' : '0'}

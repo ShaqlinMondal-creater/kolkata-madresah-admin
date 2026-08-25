@@ -15,11 +15,11 @@ import TablePagination from '@mui/material/TablePagination'
 import Snackbar from '@mui/material/Snackbar'
 import Alert from '@mui/material/Alert'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
+import RefreshIcon from '@mui/icons-material/Refresh'
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import UpgradeOutlinedIcon from '@mui/icons-material/UpgradeOutlined'
 import ClassOutlinedIcon from '@mui/icons-material/ClassOutlined'
 import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined'
@@ -37,13 +37,21 @@ const defaultFilters = {
   search: '',
   st_on_roll: '1',
   ay_id: 'all',
-  st_bohra: '',
   cg_id: [],
   st_gender: '',
   dob_from: '',
   dob_to: '',
   page: 1,
   perpage: 10,
+}
+
+const filterIconBtnSx = {
+  border: '1px solid',
+  borderColor: 'divider',
+  bgcolor: '#fff',
+  borderRadius: 1,
+  width: 40,
+  height: 40,
 }
 
 const fieldSx = { width: '100%', bgcolor: '#fff' }
@@ -119,17 +127,6 @@ function StudentRowMenu({ student, onAction }) {
             <SwapHorizOutlinedIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Switch</ListItemText>
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            setAnchorEl(null)
-            onAction('edit', student)
-          }}
-        >
-          <ListItemIcon>
-            <EditOutlinedIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Edit</ListItemText>
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -266,7 +263,6 @@ export default function StudentsPage() {
         search: debouncedSearch,
         st_on_roll: filters.st_on_roll,
         ay_id: filters.ay_id,
-        st_bohra: filters.st_bohra,
         cg_id: filters.cg_id,
         st_gender: filters.st_gender,
         dob_from: filters.dob_from,
@@ -279,7 +275,6 @@ export default function StudentsPage() {
       debouncedSearch,
       filters.st_on_roll,
       filters.ay_id,
-      filters.st_bohra,
       filters.cg_id,
       filters.st_gender,
       filters.dob_from,
@@ -355,6 +350,10 @@ export default function StudentsPage() {
     setDebouncedSearch('')
   }
 
+  function refreshList() {
+    setReloadKey((k) => k + 1)
+  }
+
   function showComingSoon(message) {
     setToast({ open: true, message })
   }
@@ -420,8 +419,6 @@ export default function StudentsPage() {
       openClassAction('change_class', [student.st_id], student.ay_id || filters.ay_id)
       return
     }
-    const name = student.name || `student #${student.st_id}`
-    showComingSoon(`Edit “${name}” is coming soon.`)
   }
 
   function onBulkAction(action) {
@@ -484,7 +481,7 @@ export default function StudentsPage() {
     })
   }
 
-  const colSpan = 12
+  const colSpan = 11
 
   return (
     <section className="module-page students-page">
@@ -578,24 +575,6 @@ export default function StudentsPage() {
 
           <TextField
             select
-            sx={fieldSx}
-            value={filters.st_bohra}
-            onChange={(e) => setField('st_bohra', e.target.value)}
-            slotProps={selectSlotProps('Is Bohra', {
-              1: 'Bohra',
-              0: 'Non Bohra',
-            })}
-            inputProps={{ 'aria-label': 'Is Bohra' }}
-          >
-            <MenuItem value="">
-              <em>Is Bohra</em>
-            </MenuItem>
-            <MenuItem value="1">Bohra</MenuItem>
-            <MenuItem value="0">Non Bohra</MenuItem>
-          </TextField>
-
-          <TextField
-            select
             className="students-filters__field--sm"
             sx={smFieldSx}
             value={filters.st_gender}
@@ -649,6 +628,32 @@ export default function StudentsPage() {
               </MenuItem>
             ))}
           </TextField>
+
+          <div className="students-filters__actions">
+            <Tooltip title="Refresh list">
+              <IconButton
+                aria-label="Refresh list"
+                onClick={refreshList}
+                color="primary"
+                size="small"
+                disabled={loadingStudents}
+                sx={filterIconBtnSx}
+              >
+                <RefreshIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Reset filters">
+              <IconButton
+                aria-label="Reset filters"
+                onClick={resetFilters}
+                color="primary"
+                size="small"
+                sx={filterIconBtnSx}
+              >
+                <RestartAltIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </div>
         </div>
 
         <div className="students-filters__row students-filters__row--secondary">
@@ -678,27 +683,6 @@ export default function StudentsPage() {
               placeholder="Class"
               onChange={(cg_id) => setField('cg_id', cg_id)}
             />
-          </div>
-
-          <div className="students-filters__actions">
-            <Tooltip title="Reset filters">
-              <IconButton
-                aria-label="Reset filters"
-                onClick={resetFilters}
-                color="primary"
-                size="small"
-                sx={{
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  bgcolor: '#fff',
-                  borderRadius: 1,
-                  width: 40,
-                  height: 40,
-                }}
-              >
-                <RestartAltIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
           </div>
         </div>
       </div>
@@ -730,7 +714,6 @@ export default function StudentsPage() {
               <th>Class</th>
               <th>Gender</th>
               <th>DOB</th>
-              <th>Bohra</th>
               <th>Status</th>
               <th>Mobile</th>
               <th className="students-table__action">Action</th>
@@ -794,13 +777,6 @@ export default function StudentsPage() {
                     <td>{st.class_name || '—'}</td>
                     <td>{st.gender || '—'}</td>
                     <td>{st.dob || '—'}</td>
-                    <td>
-                      <span
-                        className={`pill ${st.is_bohra ? 'pill--yes' : 'pill--no'}`}
-                      >
-                        {st.is_bohra ? 'Bohra' : 'Non Bohra'}
-                      </span>
-                    </td>
                     <td>
                       <span
                         className={`pill ${st.on_roll ? 'pill--on' : 'pill--off'}`}

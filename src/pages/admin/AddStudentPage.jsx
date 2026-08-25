@@ -673,18 +673,6 @@ export default function AddStudentPage() {
                   onChange={(e) => setStudent('roll_no', e.target.value)}
                 />
               </Field>
-              <Field label="Bohra" optional>
-                <TextField
-                  select
-                  size="small"
-                  sx={fieldSx}
-                  value={form.student.bohra || '1'}
-                  onChange={(e) => setStudent('bohra', e.target.value)}
-                >
-                  <MenuItem value="1">Yes (Bohra)</MenuItem>
-                  <MenuItem value="0">No (Non Bohra)</MenuItem>
-                </TextField>
-              </Field>
               <Field
                 label="ITS"
                 required
