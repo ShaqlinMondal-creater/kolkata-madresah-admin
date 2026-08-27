@@ -8,6 +8,7 @@ import FeesManagementPage from '@/pages/admin/FeesManagementPage'
 import TransactionPage from '@/pages/admin/TransactionPage'
 import AcademicSectionPage from '@/pages/admin/AcademicSectionPage'
 import SettingsPage from '@/pages/admin/SettingsPage'
+import ActionLogsPage from '@/pages/admin/ActionLogsPage'
 import ProfilePage from '@/pages/admin/ProfilePage'
 import StudentDashboardPage from '@/pages/student/StudentDashboardPage'
 import StudentFeesPage from '@/pages/student/StudentFeesPage'
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="/transaction" element={<TransactionPage />} />
           <Route path="/academic-section" element={<AcademicSectionPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/action-logs" element={<ActionLogsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
 
