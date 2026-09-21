@@ -23,12 +23,12 @@ export default function BrandPanel({ variant = 'admin' }) {
 
       <div className="brand-panel__content">
         <p className="brand-panel__kicker">
-          {isStudent ? 'Student Portal' : home.kicker}
+          {isStudent ? 'Pay Fees' : home.kicker}
         </p>
         <h1 className="brand-panel__title">{home.title}</h1>
         <p className="brand-panel__lead">
           {isStudent
-            ? 'Sign in with your Roll No to view fees and your account.'
+            ? 'Sign in with your Roll No to pay fees and view your account.'
             : (
               <>
                 {home.leadBeforeSup}

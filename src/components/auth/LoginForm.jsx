@@ -82,7 +82,11 @@ export default function LoginForm({
               {content.login.switchToAdmin}
             </button>
           ) : (
-            <button type="button" onClick={() => onSwitchMode('student')}>
+            <button
+              type="button"
+              className="login-form__switch-btn"
+              onClick={() => onSwitchMode('student')}
+            >
               {content.login.switchToStudent}
             </button>
           )}

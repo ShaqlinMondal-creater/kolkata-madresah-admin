@@ -80,9 +80,9 @@
 
 .login-layout.is-student .login-layout__auth {
   background:
-    radial-gradient(circle at top, rgba(196, 145, 120, 0.18), transparent 55%),
-    linear-gradient(180deg, #4a1524 0%, #2f0d16 100%);
-  border-left-color: rgba(196, 145, 120, 0.35);
+    radial-gradient(circle at top, rgba(196, 163, 90, 0.18), transparent 55%),
+    linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+  border-left-color: var(--line);
 }
 
 /* ---- Brand (70%) ---- */
@@ -221,35 +221,35 @@
 
 .brand-panel--student {
   background:
-    radial-gradient(circle at 16% 10%, rgba(196, 145, 120, 0.22), transparent 42%),
-    linear-gradient(180deg, #5c1a2e 0%, #3a101c 48%, #2a0b14 100%);
-  color: #f8efe8;
+    radial-gradient(circle at 16% 10%, rgba(196, 163, 90, 0.14), transparent 42%),
+    linear-gradient(180deg, var(--paper-soft) 0%, var(--paper) 100%);
+  color: var(--ink);
 }
 
 .brand-panel--student .brand-panel__kicker {
-  color: #e8c4a8;
+  color: var(--ink);
 }
 
 .brand-panel--student .brand-panel__title {
-  background: linear-gradient(180deg, #f6e0c8, #d4a574);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  color: var(--panel);
 }
 
 .brand-panel--student .brand-panel__lead,
 .brand-panel--student .brand-panel__contact,
 .brand-panel--student .brand-panel__copyright,
 .brand-panel--student .brand-panel__student-note {
-  color: rgba(248, 239, 232, 0.92);
+  color: var(--ink-soft);
 }
 
 .brand-panel--student .brand-panel__contact a {
-  color: #f0d0b8;
+  color: var(--panel);
 }
 
 .brand-panel--student .brand-panel__hero-shade {
-  background: linear-gradient(to top, rgba(42, 11, 20, 0.72), transparent);
+  background: linear-gradient(to top, rgba(20, 35, 28, 0.45), transparent);
 }
 
 .brand-panel__student-note {
@@ -437,16 +437,46 @@
   color: #f7edd0;
 }
 
+.login-form__switch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 0.15rem;
+  border: 1px solid rgba(228, 207, 149, 0.55);
+  border-radius: 8px;
+  padding: 0.72rem 1rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--gold-soft);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 160ms ease, border-color 160ms ease, transform 150ms ease;
+}
+
+.login-form__switch-btn:hover,
+.login-form__switch-btn:focus-visible {
+  background: rgba(228, 207, 149, 0.18);
+  border-color: var(--gold-soft);
+  transform: translateY(-1px);
+  outline: none;
+  color: #f7edd0;
+}
+
 .login-form--student .login-form__eyebrow {
-  color: #e8c4a8;
+  color: var(--gold-soft);
 }
 
 .login-form__submit--student {
-  background: linear-gradient(180deg, #8b2f45, #6b2033) !important;
+  background: linear-gradient(135deg, var(--gold-soft), var(--gold)) !important;
+  color: var(--panel) !important;
 }
 
 .login-form__submit--student:hover {
-  filter: brightness(1.06);
+  filter: brightness(1.05);
 }
 
 @keyframes fade-rise {
