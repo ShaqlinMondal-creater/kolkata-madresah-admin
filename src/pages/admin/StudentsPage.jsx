@@ -50,14 +50,12 @@ const filterIconBtnSx = {
   borderColor: 'divider',
   bgcolor: '#fff',
   borderRadius: 1,
-  width: 40,
-  height: 40,
+  width: 34,
+  height: 34,
 }
 
-const fieldSx = { width: '100%', bgcolor: '#fff' }
+const fieldSx = { bgcolor: '#fff' }
 const smFieldSx = {
-  width: '100%',
-  maxWidth: 126,
   bgcolor: '#fff',
   '& input': { fontSize: '0.85rem' },
 }
@@ -546,7 +544,7 @@ export default function StudentsPage() {
       </header>
 
       <div className="students-filters">
-        <div className="students-filters__row students-filters__row--primary">
+        <div className="students-filters__row">
           <TextField
             className="students-filters__field--name"
             sx={fieldSx}
@@ -558,6 +556,7 @@ export default function StudentsPage() {
 
           <TextField
             select
+            className="students-filters__field--sm"
             sx={fieldSx}
             value={filters.st_on_roll}
             onChange={(e) => setField('st_on_roll', e.target.value)}
@@ -594,6 +593,7 @@ export default function StudentsPage() {
 
           <TextField
             select
+            className="students-filters__field--year"
             sx={fieldSx}
             value={filters.ay_id}
             onChange={(e) => setField('ay_id', e.target.value)}
@@ -629,34 +629,6 @@ export default function StudentsPage() {
             ))}
           </TextField>
 
-          <div className="students-filters__actions">
-            <Tooltip title="Refresh list">
-              <IconButton
-                aria-label="Refresh list"
-                onClick={refreshList}
-                color="primary"
-                size="small"
-                disabled={loadingStudents}
-                sx={filterIconBtnSx}
-              >
-                <RefreshIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Reset filters">
-              <IconButton
-                aria-label="Reset filters"
-                onClick={resetFilters}
-                color="primary"
-                size="small"
-                sx={filterIconBtnSx}
-              >
-                <RestartAltIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </div>
-        </div>
-
-        <div className="students-filters__row students-filters__row--secondary">
           <TextField
             className="students-filters__field--sm"
             sx={smFieldSx}
@@ -683,6 +655,32 @@ export default function StudentsPage() {
               placeholder="Class"
               onChange={(cg_id) => setField('cg_id', cg_id)}
             />
+          </div>
+
+          <div className="students-filters__actions">
+            <Tooltip title="Refresh list">
+              <IconButton
+                aria-label="Refresh list"
+                onClick={refreshList}
+                color="primary"
+                size="small"
+                disabled={loadingStudents}
+                sx={filterIconBtnSx}
+              >
+                <RefreshIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Reset filters">
+              <IconButton
+                aria-label="Reset filters"
+                onClick={resetFilters}
+                color="primary"
+                size="small"
+                sx={filterIconBtnSx}
+              >
+                <RestartAltIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </div>
         </div>
       </div>

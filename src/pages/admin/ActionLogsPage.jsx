@@ -30,10 +30,8 @@ const defaultFilters = {
   perpage: 20,
 }
 
-const fieldSx = { width: '100%', bgcolor: '#fff' }
+const fieldSx = { bgcolor: '#fff' }
 const smFieldSx = {
-  width: '100%',
-  maxWidth: 138,
   bgcolor: '#fff',
   '& input': { fontSize: '0.85rem' },
 }
@@ -215,6 +213,7 @@ export default function ActionLogsPage() {
           />
 
           <TextField
+            className="txn-filters__field--status"
             sx={smFieldSx}
             value={filters.status}
             onChange={(e) => setField('status', e.target.value)}
@@ -252,8 +251,8 @@ export default function ActionLogsPage() {
                   borderColor: 'divider',
                   bgcolor: '#fff',
                   borderRadius: 1,
-                  width: 40,
-                  height: 40,
+                  width: 34,
+                  height: 34,
                 }}
               >
                 <RestartAltIcon fontSize="small" />

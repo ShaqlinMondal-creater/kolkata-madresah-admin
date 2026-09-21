@@ -36,10 +36,8 @@ const defaultFilters = {
   perpage: 10,
 }
 
-const fieldSx = { width: '100%', bgcolor: '#fff' }
+const fieldSx = { bgcolor: '#fff' }
 const smFieldSx = {
-  width: '100%',
-  maxWidth: 138,
   bgcolor: '#fff',
   '& input': { fontSize: '0.85rem' },
 }
@@ -372,7 +370,7 @@ export default function FeesManagementPage() {
       </header>
 
       <div className="fees-filters">
-        <div className="fees-filters__row fees-filters__row--main">
+        <div className="fees-filters__row">
           <TextField
             className="fees-filters__field--name"
             sx={fieldSx}
@@ -394,6 +392,7 @@ export default function FeesManagementPage() {
 
           <TextField
             select
+            className="fees-filters__field--status"
             sx={fieldSx}
             value={filters.status}
             onChange={(e) => setField('status', e.target.value)}
@@ -412,6 +411,7 @@ export default function FeesManagementPage() {
 
           <TextField
             select
+            className="fees-filters__field--year"
             sx={fieldSx}
             value={filters.ay_id}
             onChange={(e) => setField('ay_id', e.target.value)}
@@ -443,9 +443,7 @@ export default function FeesManagementPage() {
               </MenuItem>
             ))}
           </TextField>
-        </div>
 
-        <div className="fees-filters__row fees-filters__row--dates">
           <TextField
             className="fees-filters__field--date"
             sx={smFieldSx}
@@ -474,8 +472,8 @@ export default function FeesManagementPage() {
                   borderColor: 'divider',
                   bgcolor: '#fff',
                   borderRadius: 1,
-                  width: 40,
-                  height: 40,
+                  width: 34,
+                  height: 34,
                 }}
               >
                 <RestartAltIcon fontSize="small" />

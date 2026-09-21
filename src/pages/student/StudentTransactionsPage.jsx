@@ -35,8 +35,8 @@ const fieldSx = {
   minWidth: 150,
   bgcolor: '#fff',
   '& .MuiOutlinedInput-root': {
-    borderRadius: '0.65rem',
-    height: 40,
+    borderRadius: '0.55rem',
+    height: 34,
   },
 }
 
@@ -44,11 +44,11 @@ const dateSx = {
   minWidth: 168,
   bgcolor: '#fff',
   '& .MuiOutlinedInput-root': {
-    borderRadius: '0.65rem',
-    height: 40,
+    borderRadius: '0.55rem',
+    height: 34,
   },
   '& input': {
-    fontSize: '0.88rem',
+    fontSize: '0.82rem',
     py: 0,
   },
 }
@@ -253,8 +253,8 @@ export default function StudentTransactionsPage() {
               borderColor: 'divider',
               bgcolor: '#fff',
               borderRadius: 1,
-              width: 40,
-              height: 40,
+              width: 34,
+              height: 34,
             }}
           >
             <RestartAltIcon fontSize="small" />

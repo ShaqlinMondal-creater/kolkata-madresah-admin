@@ -1825,12 +1825,12 @@
 
 .dash-page__filter select {
   border: 1px solid rgba(196, 163, 90, 0.4);
-  border-radius: 0.55rem;
+  border-radius: 0.45rem;
   background: #fffdf8;
   color: var(--ink);
   font: inherit;
   font-weight: 500;
-  padding: 0.7rem 0.85rem;
+  padding: 0.45rem 0.7rem;
   outline: none;
   cursor: pointer;
 }
@@ -2213,61 +2213,80 @@
 }
 
 .students-filters {
-  --filter-sm: 7.85rem;
-  margin-top: 1.1rem;
-  display: grid;
-  gap: 0.75rem;
-  padding: 1rem;
-  border-radius: 0.75rem;
+  --filter-sm: 8.2rem;
+  --filter-md: 8.8rem;
+  --filter-search: 10.5rem;
+  --filter-class: 9.5rem;
+  --filter-year: 9.8rem;
+  margin-top: 0.65rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.55rem;
   border: 1px solid rgba(196, 163, 90, 0.28);
   background: #fffdf8;
-  width: 100%;
+  width: fit-content;
+  max-width: 100%;
   box-sizing: border-box;
   box-shadow: 0 1px 2px rgba(15, 42, 34, 0.04);
   flex-shrink: 0;
 }
 
 .students-filters__row {
-  display: grid;
-  gap: 0.65rem;
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
 }
 
-.students-filters__row--primary {
-  grid-template-columns:
-    minmax(210px, 1.7fr)
-    minmax(7.4rem, 0.7fr)
-    var(--filter-sm)
-    minmax(8.2rem, 0.85fr)
-    auto;
-}
-
+.students-filters__row--primary,
 .students-filters__row--secondary {
-  grid-template-columns:
-    var(--filter-sm)
-    var(--filter-sm)
-    minmax(9rem, 11.5rem)
-    1fr;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
 }
 
+.students-filters .MuiTextField-root,
+.students-filters .MuiFormControl-root {
+  width: var(--filter-md) !important;
+  max-width: 100%;
+  flex: 0 0 auto;
+}
+
+.students-filters .MuiFormControl-root.students-filters__field--name,
+.students-filters__field--name {
+  width: var(--filter-search) !important;
+}
+
+.students-filters .MuiFormControl-root.students-filters__field--sm,
 .students-filters__field--sm {
   width: var(--filter-sm) !important;
-  max-width: 100%;
-  justify-self: start;
+}
+
+.students-filters .MuiFormControl-root.students-filters__field--year,
+.students-filters__field--year {
+  width: var(--filter-year) !important;
 }
 
 .students-filters__field--class {
+  width: var(--filter-class);
+  max-width: var(--filter-class);
   min-width: 0;
-  max-width: 11.5rem;
-  width: 100%;
+  flex: 0 0 auto;
+}
+
+.students-filters__field--class .MuiAutocomplete-root {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 .students-filters__actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 0.4rem;
-  min-height: 2.5rem;
+  justify-content: flex-start;
+  gap: 0.3rem;
+  min-height: 2.1rem;
+  margin-left: 0;
+  flex: 0 0 auto;
 }
 
 .students-filters__ph {
@@ -2282,11 +2301,75 @@
   font-weight: 500;
 }
 
+/* Shared compact density for all list filters */
+.students-filters .MuiInputBase-root,
+.fees-filters .MuiInputBase-root,
+.txn-filters .MuiInputBase-root,
+.academic-filters .MuiInputBase-root,
+.st-txn-filters .MuiInputBase-root {
+  min-height: 34px;
+  font-size: 0.82rem;
+}
+
+.students-filters .MuiOutlinedInput-input,
+.fees-filters .MuiOutlinedInput-input,
+.txn-filters .MuiOutlinedInput-input,
+.academic-filters .MuiOutlinedInput-input,
+.st-txn-filters .MuiOutlinedInput-input {
+  padding-top: 6.5px;
+  padding-bottom: 6.5px;
+  font-size: 0.82rem;
+}
+
+.students-filters .MuiSelect-select,
+.fees-filters .MuiSelect-select,
+.txn-filters .MuiSelect-select,
+.academic-filters .MuiSelect-select,
+.st-txn-filters .MuiSelect-select {
+  padding-top: 6.5px !important;
+  padding-bottom: 6.5px !important;
+  min-height: unset !important;
+  display: flex;
+  align-items: center;
+  font-size: 0.82rem;
+}
+
+.students-filters .MuiAutocomplete-inputRoot,
+.fees-filters .MuiAutocomplete-inputRoot {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+  min-height: 34px;
+}
+
+.students-filters .MuiIconButton-root,
+.fees-filters .MuiIconButton-root,
+.txn-filters .MuiIconButton-root,
+.academic-filters .MuiIconButton-root,
+.st-txn-filters .MuiIconButton-root {
+  width: 34px;
+  height: 34px;
+}
+
+.students-filters .MuiButton-root,
+.fees-filters .MuiButton-root,
+.txn-filters .MuiButton-root,
+.academic-filters .MuiButton-root {
+  min-height: 34px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  font-size: 0.82rem;
+}
+
+.students-table__check .MuiCheckbox-root,
+.fees-table__check .MuiCheckbox-root {
+  padding: 4px;
+}
+
 .students-table-wrap {
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
   position: relative;
   border: 1px solid rgba(196, 163, 90, 0.28);
-  border-radius: 0.9rem;
+  border-radius: 0.65rem;
   background: #fffdf8;
   overflow: auto;
   flex: 1;
@@ -2365,11 +2448,11 @@
 
 .students-table th,
 .students-table td {
-  padding: 0.7rem 0.85rem;
+  padding: 0.4rem 0.6rem;
   text-align: left;
   border-bottom: 1px solid rgba(20, 35, 28, 0.08);
   vertical-align: middle;
-  font-size: 0.92rem;
+  font-size: 0.84rem;
   background: #fffdf8;
 }
 
@@ -2404,9 +2487,9 @@
   background: #ead7a0;
   background-image: linear-gradient(180deg, #f3e7c4, #ead7a0);
   color: #3d2e0d;
-  font-size: 0.76rem;
+  font-size: 0.7rem;
   font-weight: 750;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
   box-shadow: inset 0 -1px 0 rgba(111, 86, 32, 0.22);
@@ -2468,8 +2551,8 @@
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  padding: 0.22rem 0.55rem;
-  font-size: 0.78rem;
+  padding: 0.12rem 0.45rem;
+  font-size: 0.72rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -2498,7 +2581,7 @@
 .students-pager .MuiTablePagination-toolbar {
   padding-left: 0.25rem;
   padding-right: 0.25rem;
-  min-height: 52px;
+  min-height: 40px;
 }
 
 .students-pager .MuiTablePagination-selectLabel,
@@ -2540,54 +2623,84 @@
 }
 
 .fees-filters {
-  margin-top: 1.1rem;
-  display: grid;
-  gap: 0.75rem;
-  padding: 1rem;
-  border-radius: 0.75rem;
+  --filter-sm: 8.2rem;
+  --filter-md: 8.5rem;
+  --filter-search: 10.5rem;
+  --filter-class: 9.5rem;
+  --filter-year: 10rem;
+  margin-top: 0.65rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.55rem;
   border: 1px solid rgba(196, 163, 90, 0.28);
   background: #fffdf8;
-  width: 100%;
+  width: fit-content;
+  max-width: 100%;
   box-sizing: border-box;
   box-shadow: 0 1px 2px rgba(15, 42, 34, 0.04);
   flex-shrink: 0;
 }
 
 .fees-filters__row {
-  display: grid;
-  gap: 0.65rem;
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
 }
 
-.fees-filters__row--main {
-  grid-template-columns:
-    minmax(180px, 1.4fr)
-    minmax(9rem, 12rem)
-    minmax(7.5rem, 0.8fr)
-    minmax(8.5rem, 0.95fr);
-}
-
+.fees-filters__row--main,
 .fees-filters__row--dates {
-  grid-template-columns: 8.6rem 8.6rem auto 1fr;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.fees-filters .MuiTextField-root,
+.fees-filters .MuiFormControl-root {
+  width: var(--filter-md) !important;
+  max-width: 100%;
+  flex: 0 0 auto;
+}
+
+.fees-filters .MuiFormControl-root.fees-filters__field--name,
+.fees-filters__field--name {
+  width: var(--filter-search) !important;
 }
 
 .fees-filters__field--class {
+  width: var(--filter-class);
+  max-width: var(--filter-class);
   min-width: 0;
+  flex: 0 0 auto;
 }
 
 .fees-filters__field--class .MuiAutocomplete-root {
-  max-width: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
+.fees-filters .MuiFormControl-root.fees-filters__field--year,
+.fees-filters__field--year {
+  width: var(--filter-year) !important;
+}
+
+.fees-filters .MuiFormControl-root.fees-filters__field--status,
+.fees-filters__field--status {
+  width: 7.5rem !important;
+}
+
+.fees-filters .MuiFormControl-root.fees-filters__field--date,
 .fees-filters__field--date {
-  max-width: 8.6rem;
+  width: var(--filter-sm) !important;
+  max-width: var(--filter-sm);
 }
 
 .fees-filters__actions {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  min-height: 2.5rem;
+  min-height: 2.1rem;
+  flex: 0 0 auto;
 }
 
 .fees-filters__ph {
@@ -2613,10 +2726,10 @@
 }
 
 .fees-table-wrap {
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
   position: relative;
   border: 1px solid rgba(196, 163, 90, 0.28);
-  border-radius: 0.9rem;
+  border-radius: 0.65rem;
   background: #fffdf8;
   overflow: auto;
   flex: 1;
@@ -2641,11 +2754,11 @@
 
 .fees-table th,
 .fees-table td {
-  padding: 0.7rem 0.85rem;
+  padding: 0.4rem 0.6rem;
   text-align: left;
   border-bottom: 1px solid rgba(20, 35, 28, 0.08);
   vertical-align: middle;
-  font-size: 0.92rem;
+  font-size: 0.84rem;
   background: #fffdf8;
 }
 
@@ -2680,9 +2793,9 @@
   background: #ead7a0;
   background-image: linear-gradient(180deg, #f3e7c4, #ead7a0);
   color: #3d2e0d;
-  font-size: 0.76rem;
+  font-size: 0.7rem;
   font-weight: 750;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
   box-shadow: inset 0 -1px 0 rgba(111, 86, 32, 0.22);
@@ -2773,7 +2886,7 @@
 .fees-pager .MuiTablePagination-toolbar {
   padding-left: 0.25rem;
   padding-right: 0.25rem;
-  min-height: 52px;
+  min-height: 40px;
 }
 
 .fees-pager .MuiTablePagination-selectLabel,
@@ -2807,35 +2920,57 @@
 }
 
 .txn-filters {
-  margin-top: 1.1rem;
-  padding: 1rem;
-  border-radius: 0.75rem;
+  --filter-sm: 8.2rem;
+  --filter-md: 8.5rem;
+  --filter-search: 11rem;
+  margin-top: 0.65rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.55rem;
   border: 1px solid rgba(196, 163, 90, 0.28);
   background: #fffdf8;
+  width: fit-content;
+  max-width: 100%;
   box-shadow: 0 1px 2px rgba(15, 42, 34, 0.04);
   flex-shrink: 0;
 }
 
 .txn-filters__row {
-  display: grid;
-  grid-template-columns:
-    minmax(180px, 1.5fr)
-    8.6rem
-    8.6rem
-    minmax(7.5rem, 0.85fr)
-    auto;
-  gap: 0.65rem;
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
 }
 
+.txn-filters .MuiTextField-root,
+.txn-filters .MuiFormControl-root {
+  width: var(--filter-md) !important;
+  max-width: 100%;
+  flex: 0 0 auto;
+}
+
+.txn-filters .MuiFormControl-root.txn-filters__field--name,
+.txn-filters__field--name {
+  width: var(--filter-search) !important;
+}
+
+.txn-filters .MuiFormControl-root.txn-filters__field--date,
 .txn-filters__field--date {
-  max-width: 8.6rem;
+  width: var(--filter-sm) !important;
+  max-width: var(--filter-sm);
+}
+
+.txn-filters .MuiFormControl-root.txn-filters__field--status,
+.txn-filters .MuiFormControl-root.txn-filters__field--mode,
+.txn-filters__field--status,
+.txn-filters__field--mode {
+  width: 7.5rem !important;
 }
 
 .txn-filters__actions {
   display: flex;
   align-items: center;
-  min-height: 2.5rem;
+  min-height: 2.1rem;
+  flex: 0 0 auto;
 }
 
 .txn-filters__ph {
@@ -2860,10 +2995,10 @@
 }
 
 .txn-table-wrap {
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
   position: relative;
   border: 1px solid rgba(196, 163, 90, 0.28);
-  border-radius: 0.9rem;
+  border-radius: 0.65rem;
   background: #fffdf8;
   overflow: auto;
   flex: 1;
@@ -2888,11 +3023,11 @@
 
 .txn-table th,
 .txn-table td {
-  padding: 0.7rem 0.85rem;
+  padding: 0.4rem 0.6rem;
   text-align: left;
   border-bottom: 1px solid rgba(20, 35, 28, 0.08);
   vertical-align: middle;
-  font-size: 0.92rem;
+  font-size: 0.84rem;
   background: #fffdf8;
 }
 
@@ -2903,9 +3038,9 @@
   background: #ead7a0;
   background-image: linear-gradient(180deg, #f3e7c4, #ead7a0);
   color: #3d2e0d;
-  font-size: 0.76rem;
+  font-size: 0.7rem;
   font-weight: 750;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
   box-shadow: inset 0 -1px 0 rgba(111, 86, 32, 0.22);
@@ -2987,7 +3122,7 @@
 }
 
 .txn-pager .MuiTablePagination-toolbar {
-  min-height: 52px;
+  min-height: 40px;
 }
 
 .txn-detail {
@@ -3098,13 +3233,13 @@
 }
 
 .academic-filters {
-  margin-top: 1.1rem;
+  margin-top: 0.65rem;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.65rem;
+  gap: 0.45rem;
   align-items: center;
-  padding: 1rem;
-  border-radius: 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.55rem;
   border: 1px solid rgba(196, 163, 90, 0.28);
   background: #fffdf8;
   flex-shrink: 0;
@@ -3121,10 +3256,10 @@
 }
 
 .academic-table-wrap {
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
   position: relative;
   border: 1px solid rgba(196, 163, 90, 0.28);
-  border-radius: 0.9rem;
+  border-radius: 0.65rem;
   background: #fffdf8;
   overflow: auto;
   flex: 1;
@@ -3149,11 +3284,11 @@
 
 .academic-table th,
 .academic-table td {
-  padding: 0.7rem 0.85rem;
+  padding: 0.4rem 0.6rem;
   text-align: left;
   border-bottom: 1px solid rgba(20, 35, 28, 0.08);
   vertical-align: middle;
-  font-size: 0.92rem;
+  font-size: 0.84rem;
   background: #fffdf8;
 }
 
@@ -3164,9 +3299,9 @@
   background: #ead7a0;
   background-image: linear-gradient(180deg, #f3e7c4, #ead7a0);
   color: #3d2e0d;
-  font-size: 0.76rem;
+  font-size: 0.7rem;
   font-weight: 750;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
   box-shadow: inset 0 -1px 0 rgba(111, 86, 32, 0.22);
@@ -3863,73 +3998,51 @@
     width: 100%;
   }
 
-  .students-filters {
-    gap: 0.7rem;
+  .students-filters,
+  .fees-filters,
+  .txn-filters {
+    width: 100%;
   }
 
+  .students-filters__row,
   .students-filters__row--primary,
-  .students-filters__row--secondary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .students-filters__field--name {
-    grid-column: 1 / -1;
-  }
-
-  .students-filters__field--sm {
-    width: 100% !important;
-    max-width: none;
-  }
-
-  .students-filters__field--class {
-    max-width: none;
-  }
-
-  .students-filters__field--class .MuiAutocomplete-root {
-    max-width: none !important;
-  }
-
-  .students-filters__actions {
-    grid-column: 1 / -1;
-    justify-content: flex-end;
-  }
-
-  .fees-filters__row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
+  .students-filters__row--secondary,
+  .fees-filters__row,
   .fees-filters__row--main,
-  .fees-filters__row--dates {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .fees-filters__field--name {
-    grid-column: 1 / -1;
-  }
-
-  .fees-filters__field--date {
-    max-width: none;
-  }
-
-  .fees-filters__actions {
-    grid-column: 1 / -1;
-    justify-content: flex-end;
-  }
-
+  .fees-filters__row--dates,
   .txn-filters__row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
   }
 
-  .txn-filters__field--name {
-    grid-column: 1 / -1;
-  }
-
-  .txn-filters__field--date {
+  .students-filters .MuiTextField-root,
+  .students-filters .MuiFormControl-root,
+  .fees-filters .MuiTextField-root,
+  .fees-filters .MuiFormControl-root,
+  .txn-filters .MuiTextField-root,
+  .txn-filters .MuiFormControl-root,
+  .students-filters__field--name,
+  .students-filters__field--sm,
+  .students-filters__field--year,
+  .students-filters__field--class,
+  .fees-filters__field--name,
+  .fees-filters__field--date,
+  .fees-filters__field--year,
+  .fees-filters__field--status,
+  .fees-filters__field--class,
+  .txn-filters__field--name,
+  .txn-filters__field--date,
+  .txn-filters__field--status,
+  .txn-filters__field--mode {
+    width: calc(50% - 0.25rem) !important;
     max-width: none;
+    flex: 1 1 calc(50% - 0.25rem);
   }
 
+  .students-filters__actions,
+  .fees-filters__actions,
   .txn-filters__actions {
-    grid-column: 1 / -1;
+    width: 100%;
     justify-content: flex-end;
   }
 }
@@ -3939,19 +4052,37 @@
     grid-template-columns: 1fr;
   }
 
-  .students-filters__row--primary,
-  .students-filters__row--secondary {
-    grid-template-columns: 1fr;
+  .students-filters .MuiTextField-root,
+  .students-filters .MuiFormControl-root,
+  .fees-filters .MuiTextField-root,
+  .fees-filters .MuiFormControl-root,
+  .txn-filters .MuiTextField-root,
+  .txn-filters .MuiFormControl-root,
+  .students-filters__field--name,
+  .students-filters__field--sm,
+  .students-filters__field--year,
+  .students-filters__field--class,
+  .fees-filters__field--name,
+  .fees-filters__field--date,
+  .fees-filters__field--year,
+  .fees-filters__field--status,
+  .fees-filters__field--class,
+  .txn-filters__field--name,
+  .txn-filters__field--date,
+  .txn-filters__field--status,
+  .txn-filters__field--mode {
+    width: 100% !important;
+    flex: 1 1 100%;
   }
 
+  .students-filters__row--primary,
+  .students-filters__row--secondary,
   .fees-filters__row,
   .fees-filters__row--main,
-  .fees-filters__row--dates {
-    grid-template-columns: 1fr;
-  }
-
+  .fees-filters__row--dates,
   .txn-filters__row {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-wrap: wrap;
   }
 }
 
@@ -5195,10 +5326,10 @@
 
 .student-fees-table th,
 .student-fees-table td {
-  padding: 0.7rem 0.85rem;
+  padding: 0.4rem 0.6rem;
   text-align: left;
   border-bottom: 1px solid rgba(20, 35, 28, 0.08);
-  font-size: 0.9rem;
+  font-size: 0.84rem;
 }
 
 .student-fees-table th {
@@ -5206,7 +5337,7 @@
   top: 0;
   background: linear-gradient(180deg, #f3e7c4, #ead7a0);
   color: #3d2e0d;
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -5328,9 +5459,9 @@
   display: grid;
   grid-template-columns: minmax(140px, 160px) minmax(150px, 170px) minmax(150px, 170px) auto;
   align-items: center;
-  gap: 0.65rem;
-  margin-top: 0.85rem;
-  margin-bottom: 0.35rem;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+  margin-bottom: 0.25rem;
 }
 
 .st-txn-filters__ph {

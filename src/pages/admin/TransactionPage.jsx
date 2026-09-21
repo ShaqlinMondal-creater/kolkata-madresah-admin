@@ -35,10 +35,8 @@ const defaultFilters = {
   perpage: 10,
 }
 
-const fieldSx = { width: '100%', bgcolor: '#fff' }
+const fieldSx = { bgcolor: '#fff' }
 const smFieldSx = {
-  width: '100%',
-  maxWidth: 138,
   bgcolor: '#fff',
   '& input': { fontSize: '0.85rem' },
 }
@@ -285,6 +283,7 @@ export default function TransactionPage() {
 
           <TextField
             select
+            className="txn-filters__field--mode"
             sx={fieldSx}
             value={filters.mode}
             onChange={(e) => setField('mode', e.target.value)}
@@ -315,8 +314,8 @@ export default function TransactionPage() {
                   borderColor: 'divider',
                   bgcolor: '#fff',
                   borderRadius: 1,
-                  width: 40,
-                  height: 40,
+                  width: 34,
+                  height: 34,
                 }}
               >
                 <RestartAltIcon fontSize="small" />
