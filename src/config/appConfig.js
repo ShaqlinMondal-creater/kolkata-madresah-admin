@@ -131,7 +131,7 @@ export const content = {
     adminOnlyError: 'This portal is for administrators only. Use Pay Fees below.',
     networkError: 'Unable to reach the login server. Please try again.',
     switchToStudent: 'Pay Fees',
-    switchToAdmin: 'Admin login',
+    switchToAdmin: 'Admin',
   },
 
   studentLogin: {

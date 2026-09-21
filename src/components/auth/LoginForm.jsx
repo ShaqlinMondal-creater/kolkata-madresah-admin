@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { content, site } from '@/config/appConfig'
+import { content } from '@/config/appConfig'
 import { EyeOffIcon, EyeOpenIcon } from '@/components/icons/EyeIcons'
 
 export default function LoginForm({
@@ -84,7 +84,7 @@ export default function LoginForm({
           ) : (
             <button
               type="button"
-              className="login-form__switch-btn"
+              className="login-form__pay-btn"
               onClick={() => onSwitchMode('student')}
             >
               {content.login.switchToStudent}
@@ -92,12 +92,6 @@ export default function LoginForm({
           )}
         </p>
       ) : null}
-
-      <p className="login-form__footer">
-        <a href={site.url} target="_blank" rel="noreferrer">
-          kolkatamadresah.com
-        </a>
-      </p>
     </div>
   )
 }

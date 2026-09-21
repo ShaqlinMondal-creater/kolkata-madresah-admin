@@ -466,6 +466,38 @@
   color: #f7edd0;
 }
 
+.login-form__switch .login-form__pay-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 0.35rem;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.78rem 1rem;
+  background: linear-gradient(135deg, #3d8b7a, #1f5c52);
+  color: #f7f3ea;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 150ms ease, filter 150ms ease;
+}
+
+.login-form__switch .login-form__pay-btn:hover,
+.login-form__switch .login-form__pay-btn:focus-visible {
+  color: #f7f3ea;
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  outline: none;
+}
+
+.login-form__switch .login-form__pay-btn:active {
+  transform: translateY(0);
+}
+
 .login-form--student .login-form__eyebrow {
   color: var(--gold-soft);
 }
