@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import BrandPanel from '@/components/brand/BrandPanel'
 import LoginForm from '@/components/auth/LoginForm'
 import { content } from '@/config/appConfig'
@@ -9,8 +9,13 @@ import { getAuthUser, setAuthUser, clearAuthUser } from '@/auth/authStorage'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const existing = getAuthUser()
-  const [mode, setMode] = useState('admin') // admin | student
+  const initialMode = useMemo(() => {
+    const mode = String(searchParams.get('mode') || '').toLowerCase()
+    return mode === 'student' ? 'student' : 'admin'
+  }, [searchParams])
+  const [mode, setMode] = useState(initialMode) // admin | student
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -28,6 +33,9 @@ export default function LoginPage() {
     setError('')
     setUsername('')
     setPassword('')
+    navigate(next === 'student' ? '/login?mode=student' : '/login', {
+      replace: true,
+    })
   }
 
   async function handleSubmit(e) {

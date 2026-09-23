@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import ContentLayout from '@/components/layout/ContentLayout'
 import { content, site } from '@/config/appConfig'
 
@@ -39,9 +40,7 @@ export default function FeePaymentInstructions() {
             {step.linkLabel ? (
               <p>
                 {step.bodyBeforeLink}{' '}
-                <a href={site.studentLogin} target="_blank" rel="noreferrer">
-                  {step.linkLabel}
-                </a>{' '}
+                <Link to="/login?mode=student">{step.linkLabel}</Link>{' '}
                 {step.bodyAfterLink}
               </p>
             ) : null}

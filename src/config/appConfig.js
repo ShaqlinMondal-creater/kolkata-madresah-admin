@@ -73,7 +73,7 @@ export const site = {
   headerImage,
   logoImage,
   favicon: '/favicon.ico',
-  studentLogin: 'https://kolkatamadresah.com/new_mis/student/student_login.php',
+  studentLogin: '/login?mode=student',
   copyrightOwner: 'The Madresah Tayebiyah Society',
 }
 
