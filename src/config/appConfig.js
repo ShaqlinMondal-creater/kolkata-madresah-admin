@@ -229,6 +229,7 @@ export const content = {
         bodyBeforeEmail: 'If you have any questions, you can contact us at',
       },
     ],
+    
     noteTitle: 'Note:',
     noteBody:
       'Your financial information (Credit Card number, Debit Card number, Net Banking Username, Password, PIN, OTP, Google Pay details, PayTM details, UPI details, etc) will be entered by you directly on the RazorPay (ICICI) popup page. At no point of time does The Madresah Tayebiyah Society or the website developer come in possession of this information, and hence is not liable for the misuse (if any) of this information.',
