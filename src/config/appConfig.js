@@ -68,14 +68,12 @@ export const site = {
   name: 'KolkataMadresah.com',
   society: 'The Madresah Tayebiyah Society',
   url: 'https://kolkatamadresah.com',
-  contactEmail: 'madresah@sgjskolkata.com',
+  contactEmail: 'themadresahtaiyebiyahsociety@gmail.com',
   // Local assets (downloaded from main/admin sites)
   headerImage,
   logoImage,
   favicon: '/favicon.ico',
   studentLogin: 'https://kolkatamadresah.com/new_mis/student/student_login.php',
-  admissionForm:
-    'https://docs.google.com/forms/d/e/1FAIpQLScgI09Fx9KKkyMGv_LDV-nIjvZC3gBpY_Y5DkoDg3P8rxqCPQ/viewform',
   copyrightOwner: 'The Madresah Tayebiyah Society',
 }
 
@@ -88,11 +86,6 @@ export const navLinks = [
     type: 'internal',
     to: '/fee-payment-instructions',
     label: 'Fee Payment Instructions',
-  },
-  {
-    type: 'external',
-    href: site.admissionForm,
-    label: "Ba'ad as Zohar (Afternoon) Madresah Admission Form",
   },
   { type: 'internal', to: '/about-us', label: 'About Us' },
   { type: 'internal', to: '/contact-us', label: 'Contact Us' },
@@ -155,7 +148,7 @@ export const content = {
     paragraphs: [
       'The Madresah Tayebiyah Society was created by His Holiness Dr Syedna Taher Saifuddin Saheb (RA) for imparting religious education to the children of the Dawoodi Bohra community of Kolkata.',
       'The institution was then run for over 50 years under the aegis of His Holiness Dr Syedna Mohammed Burhanuddin (RA) and is currently run by His Holiness Dr Syedna Mufaddal Saifuddin Saheb (TUS) through Attalim, the Education Administration of His Holiness.',
-      'The institution currently has 4 teaching centers - Burhani Masjid (Topsia), Saifee Golden Jubilee School, Chandni Chowk, and Howrah.',
+      'The institution currently has 2 teaching centers - Burhani Masjid (Topsia) and Saifee Hall.',
     ],
   },
 
@@ -193,8 +186,6 @@ export const content = {
     madresahCodesTitle: 'Madresah Codes',
     madresahCodes: [
       { code: 'BM', name: 'Burhani Masjid' },
-      { code: 'CH', name: 'Chandni' },
-      { code: 'HW', name: 'Howrah' },
       { code: 'SH', name: 'Saifee Hall' },
     ],
     firstAccessSteps: [
