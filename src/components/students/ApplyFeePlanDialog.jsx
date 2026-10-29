@@ -40,7 +40,7 @@ export default function ApplyFeePlanDialog({
   const countLabel = useMemo(() => {
     if (stIds.length === 1) return '1 student selected'
     if (stIds.length > 1) return `${stIds.length} students selected`
-    return 'All on-roll students matching current filters'
+    return 'No students selected'
   }, [stIds.length])
 
   const selectedYear = useMemo(
@@ -91,6 +91,10 @@ export default function ApplyFeePlanDialog({
   }, [open, ayId])
 
   async function submit() {
+    if (!stIds.length) {
+      setError('Select at least one student first.')
+      return
+    }
     if (!fpId) {
       setError('Select a fee plan.')
       return
@@ -98,12 +102,9 @@ export default function ApplyFeePlanDialog({
     setSubmitting(true)
     setError('')
     try {
-      const actionFilters = stIds.length
-        ? null
-        : { ...listFilters, ay_id: ayId || listFilters.ay_id }
       const res = await applyFeePlan({
         stIds,
-        filters: actionFilters,
+        filters: null,
         fpId,
       })
 

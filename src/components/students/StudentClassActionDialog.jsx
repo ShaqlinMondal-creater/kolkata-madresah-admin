@@ -43,7 +43,7 @@ export default function StudentClassActionDialog({
   const countLabel = useMemo(() => {
     if (stIds.length === 1) return '1 student selected'
     if (stIds.length > 1) return `${stIds.length} students selected`
-    return 'All students matching current filters'
+    return 'No students selected'
   }, [stIds.length])
 
   const selectedYear = useMemo(
@@ -94,6 +94,10 @@ export default function StudentClassActionDialog({
   }, [open, ayId])
 
   async function submit() {
+    if (!stIds.length) {
+      setError('Select at least one student first.')
+      return
+    }
     if (!ayId || !targetCgId) {
       setError('Select academic year and class.')
       return
@@ -101,12 +105,9 @@ export default function StudentClassActionDialog({
     setSubmitting(true)
     setError('')
     try {
-      const actionFilters = stIds.length
-        ? null
-        : { ...listFilters, ay_id: ayId }
       const payload = {
         stIds,
-        filters: actionFilters,
+        filters: null,
         targetCgId,
       }
       const res = isUpgrade

@@ -185,7 +185,11 @@ export default function StudentsPage() {
   const [error, setError] = useState('')
   const [selectedIds, setSelectedIds] = useState([])
   const [bulkAnchor, setBulkAnchor] = useState(null)
-  const [toast, setToast] = useState({ open: false, message: '' })
+  const [toast, setToast] = useState({
+    open: false,
+    message: '',
+    severity: 'info',
+  })
   const [classAction, setClassAction] = useState({
     open: false,
     mode: 'upgrade',
@@ -359,8 +363,12 @@ export default function StudentsPage() {
     setReloadKey((k) => k + 1)
   }
 
+  function showToast(message, severity = 'info') {
+    setToast({ open: true, message, severity })
+  }
+
   function showComingSoon(message) {
-    setToast({ open: true, message })
+    showToast(message, 'info')
   }
 
   function toggleAllPage(checked) {
@@ -435,10 +443,10 @@ export default function StudentsPage() {
         const idSet = new Set(selectedIds.map(String))
         rows = students.filter((st) => idSet.has(String(st.st_id)))
         if (!rows.length) {
-          setToast({
-            open: true,
-            message: 'No selected students found on this page to export.',
-          })
+          showToast(
+            'No selected students found on this page to export.',
+            'warning',
+          )
           return
         }
       } else {
@@ -449,10 +457,7 @@ export default function StudentsPage() {
       }
 
       if (!rows.length) {
-        setToast({
-          open: true,
-          message: 'No students found for these filters.',
-        })
+        showToast('No students found for these filters.', 'warning')
         return
       }
 
@@ -462,15 +467,12 @@ export default function StudentsPage() {
         downloadStudentsExcel(rows)
       }
 
-      setToast({
-        open: true,
-        message: `Exported ${rows.length} student(s) to ${format === 'pdf' ? 'PDF' : 'Excel'}.`,
-      })
+      showToast(
+        `Exported ${rows.length} student(s) to ${format === 'pdf' ? 'PDF' : 'Excel'}.`,
+        'success',
+      )
     } catch (err) {
-      setToast({
-        open: true,
-        message: err?.message || 'Export failed. Please try again.',
-      })
+      showToast(err?.message || 'Export failed. Please try again.', 'error')
     } finally {
       setExporting(false)
     }
@@ -479,6 +481,10 @@ export default function StudentsPage() {
   function onBulkAction(action) {
     setBulkAnchor(null)
     if (action === 'upgrade') {
+      if (!selectedIds.length) {
+        showToast('Select at least one student before Upgrade.', 'warning')
+        return
+      }
       openClassAction(
         'upgrade',
         selectedIds.map(Number),
@@ -487,10 +493,8 @@ export default function StudentsPage() {
       return
     }
     if (action === 'change_class') {
-      if (filters.ay_id === 'all' && !selectedIds.length) {
-        showComingSoon(
-          'Select students or pick a specific academic year filter for bulk change class.',
-        )
+      if (!selectedIds.length) {
+        showToast('Select at least one student before Change class.', 'warning')
         return
       }
       openClassAction(
@@ -501,6 +505,10 @@ export default function StudentsPage() {
       return
     }
     if (action === 'fee_plan') {
+      if (!selectedIds.length) {
+        showToast('Select at least one student before Apply fee plan.', 'warning')
+        return
+      }
       openFeePlanAction(
         selectedIds.map(Number),
         filters.ay_id === 'all' ? '' : filters.ay_id,
@@ -517,19 +525,13 @@ export default function StudentsPage() {
   function onClassActionSuccess(res) {
     setSelectedIds([])
     setReloadKey((k) => k + 1)
-    setToast({
-      open: true,
-      message: res.message || 'Done.',
-    })
+    showToast(res.message || 'Done.', 'success')
   }
 
   function onFeePlanSuccess(res) {
     setSelectedIds([])
     setReloadKey((k) => k + 1)
-    setToast({
-      open: true,
-      message: res.message || 'Fee plan applied.',
-    })
+    showToast(res.message || 'Fee plan applied.', 'success')
   }
 
   const colSpan = 11
@@ -907,7 +909,7 @@ export default function StudentsPage() {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert
-          severity="info"
+          severity={toast.severity || 'info'}
           variant="filled"
           onClose={() => setToast((prev) => ({ ...prev, open: false }))}
           sx={{ width: '100%' }}
