@@ -12,8 +12,26 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600&display=swap"
       rel="stylesheet"
     />
+    <style>
+      /* Green shell until React BrandIntro mounts — no white flash */
+      .site-boot-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        background:
+          radial-gradient(circle at 50% 30%, rgba(196, 163, 90, 0.18), transparent 48%),
+          linear-gradient(165deg, #0f2a22 0%, #16382e 48%, #0a1a15 100%);
+        transition: opacity 200ms ease, visibility 200ms ease;
+      }
+      .site-boot-loader.is-done {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+    </style>
   </head>
   <body>
+    <div id="site-boot-loader" class="site-boot-loader" aria-hidden="true"></div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

@@ -57,3 +57,5 @@ button,
 input {
   font: inherit;
 }
+
+/* Boot loader visuals live inline in index.html (first paint). */

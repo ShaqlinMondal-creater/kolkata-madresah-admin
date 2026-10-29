@@ -24,6 +24,11 @@ import { getAcademicYears } from '@/services/academicYearApi'
 import { getClassesByYear } from '@/services/classesApi'
 import { getFeesList } from '@/services/feesApi'
 import ClassMultiSelect from '@/components/forms/ClassMultiSelect'
+import {
+  downloadFeesExcel,
+  downloadFeesPdf,
+  fetchFeesForExport,
+} from '@/utils/feesExport'
 
 const defaultFilters = {
   search: '',
@@ -132,6 +137,7 @@ export default function FeesManagementPage() {
   const [selectedIds, setSelectedIds] = useState([])
   const [bulkAnchor, setBulkAnchor] = useState(null)
   const [toast, setToast] = useState({ open: false, message: '' })
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(filters.search.trim()), 400)
@@ -313,18 +319,63 @@ export default function FeesManagementPage() {
     showComingSoon(`Update for “${label}” is coming soon.`)
   }
 
+  async function runFeesExport(format) {
+    if (exporting) return
+    setExporting(true)
+    try {
+      let exportRows = []
+      if (selectedIds.length) {
+        const idSet = new Set(selectedIds.map(String))
+        exportRows = rows.filter((row) => idSet.has(String(row.f_id)))
+        if (!exportRows.length) {
+          setToast({
+            open: true,
+            message: 'No selected fee payments found on this page to export.',
+          })
+          return
+        }
+      } else {
+        exportRows = await fetchFeesForExport({
+          ...filters,
+          search: debouncedSearch,
+        })
+      }
+
+      if (!exportRows.length) {
+        setToast({
+          open: true,
+          message: 'No fee payments found for these filters.',
+        })
+        return
+      }
+
+      if (format === 'pdf') {
+        downloadFeesPdf(exportRows)
+      } else {
+        downloadFeesExcel(exportRows)
+      }
+
+      setToast({
+        open: true,
+        message: `Exported ${exportRows.length} fee payment(s) to ${format === 'pdf' ? 'PDF' : 'Excel'}.`,
+      })
+    } catch (err) {
+      setToast({
+        open: true,
+        message: err?.message || 'Export failed. Please try again.',
+      })
+    } finally {
+      setExporting(false)
+    }
+  }
+
   function onBulkAction(action) {
     setBulkAnchor(null)
-    if (!selectedIds.length) {
-      showComingSoon('Select at least one fee payment for bulk export.')
+    if (action === 'excel' || action === 'pdf') {
+      void runFeesExport(action)
       return
     }
-    const count = selectedIds.length
-    if (action === 'excel') {
-      showComingSoon(`Export Excel for ${count} fee payment(s) is coming soon.`)
-      return
-    }
-    showComingSoon(`Export PDF for ${count} fee payment(s) is coming soon.`)
+    showComingSoon('Coming soon.')
   }
 
   const colSpan = 12
@@ -342,9 +393,11 @@ export default function FeesManagementPage() {
             onClick={(e) => setBulkAnchor(e.currentTarget)}
             aria-haspopup="true"
             aria-expanded={Boolean(bulkAnchor) ? 'true' : undefined}
+            disabled={exporting}
           >
-            Bulk action
-            {selectedIds.length ? ` (${selectedIds.length})` : ''}
+            {exporting
+              ? 'Exporting…'
+              : `Bulk action${selectedIds.length ? ` (${selectedIds.length})` : ''}`}
           </Button>
           <Menu
             anchorEl={bulkAnchor}
@@ -353,13 +406,16 @@ export default function FeesManagementPage() {
             anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
             transformOrigin={{ vertical: 'top', horizontal: 'right' }}
           >
-            <MenuItem onClick={() => onBulkAction('excel')}>
+            <MenuItem
+              onClick={() => onBulkAction('excel')}
+              disabled={exporting}
+            >
               <ListItemIcon>
                 <FileDownloadOutlinedIcon fontSize="small" />
               </ListItemIcon>
               <ListItemText>Export Excel</ListItemText>
             </MenuItem>
-            <MenuItem onClick={() => onBulkAction('pdf')}>
+            <MenuItem onClick={() => onBulkAction('pdf')} disabled={exporting}>
               <ListItemIcon>
                 <PictureAsPdfOutlinedIcon fontSize="small" />
               </ListItemIcon>

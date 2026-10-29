@@ -24,6 +24,7 @@ import UpgradeOutlinedIcon from '@mui/icons-material/UpgradeOutlined'
 import ClassOutlinedIcon from '@mui/icons-material/ClassOutlined'
 import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined'
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
+import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined'
 import RequestQuoteOutlinedIcon from '@mui/icons-material/RequestQuoteOutlined'
 import { getAcademicYears } from '@/services/academicYearApi'
 import { getClassesByYear } from '@/services/classesApi'
@@ -32,6 +33,11 @@ import ClassMultiSelect from '@/components/forms/ClassMultiSelect'
 import StudentClassActionDialog from '@/components/students/StudentClassActionDialog'
 import ApplyFeePlanDialog from '@/components/students/ApplyFeePlanDialog'
 import { useSwitchToStudent } from '@/hooks/useSwitchToStudent'
+import {
+  downloadStudentsExcel,
+  downloadStudentsPdf,
+  fetchStudentsForExport,
+} from '@/utils/studentsExport'
 
 const defaultFilters = {
   search: '',
@@ -192,6 +198,7 @@ export default function StudentsPage() {
     defaultAyId: '',
   })
   const [reloadKey, setReloadKey] = useState(0)
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(filters.search.trim()), 400)
@@ -419,6 +426,56 @@ export default function StudentsPage() {
     }
   }
 
+  async function runStudentsExport(format) {
+    if (exporting) return
+    setExporting(true)
+    try {
+      let rows = []
+      if (selectedIds.length) {
+        const idSet = new Set(selectedIds.map(String))
+        rows = students.filter((st) => idSet.has(String(st.st_id)))
+        if (!rows.length) {
+          setToast({
+            open: true,
+            message: 'No selected students found on this page to export.',
+          })
+          return
+        }
+      } else {
+        rows = await fetchStudentsForExport({
+          ...filters,
+          search: debouncedSearch,
+        })
+      }
+
+      if (!rows.length) {
+        setToast({
+          open: true,
+          message: 'No students found for these filters.',
+        })
+        return
+      }
+
+      if (format === 'pdf') {
+        downloadStudentsPdf(rows)
+      } else {
+        downloadStudentsExcel(rows)
+      }
+
+      setToast({
+        open: true,
+        message: `Exported ${rows.length} student(s) to ${format === 'pdf' ? 'PDF' : 'Excel'}.`,
+      })
+    } catch (err) {
+      setToast({
+        open: true,
+        message: err?.message || 'Export failed. Please try again.',
+      })
+    } finally {
+      setExporting(false)
+    }
+  }
+
   function onBulkAction(action) {
     setBulkAnchor(null)
     if (action === 'upgrade') {
@@ -450,15 +507,11 @@ export default function StudentsPage() {
       )
       return
     }
-    if (!selectedIds.length) {
-      showComingSoon('Select at least one student for this bulk action.')
+    if (action === 'export' || action === 'export_pdf') {
+      void runStudentsExport(action === 'export_pdf' ? 'pdf' : 'excel')
       return
     }
-    const count = selectedIds.length
-    const labels = {
-      export: `Export Excel for ${count} student(s) is coming soon.`,
-    }
-    showComingSoon(labels[action] || 'Coming soon.')
+    showComingSoon('Coming soon.')
   }
 
   function onClassActionSuccess(res) {
@@ -503,9 +556,11 @@ export default function StudentsPage() {
               onClick={(e) => setBulkAnchor(e.currentTarget)}
               aria-haspopup="true"
               aria-expanded={Boolean(bulkAnchor) ? 'true' : undefined}
+              disabled={exporting}
             >
-              Bulk action
-              {selectedIds.length ? ` (${selectedIds.length})` : ''}
+              {exporting
+                ? 'Exporting…'
+                : `Bulk action${selectedIds.length ? ` (${selectedIds.length})` : ''}`}
             </Button>
             <Menu
               anchorEl={bulkAnchor}
@@ -514,11 +569,23 @@ export default function StudentsPage() {
               anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
               transformOrigin={{ vertical: 'top', horizontal: 'right' }}
             >
-              <MenuItem onClick={() => onBulkAction('export')}>
+              <MenuItem
+                onClick={() => onBulkAction('export')}
+                disabled={exporting}
+              >
                 <ListItemIcon>
                   <FileDownloadOutlinedIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText>Export Excel</ListItemText>
+              </MenuItem>
+              <MenuItem
+                onClick={() => onBulkAction('export_pdf')}
+                disabled={exporting}
+              >
+                <ListItemIcon>
+                  <PictureAsPdfOutlinedIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Export PDF</ListItemText>
               </MenuItem>
               <MenuItem onClick={() => onBulkAction('fee_plan')}>
                 <ListItemIcon>

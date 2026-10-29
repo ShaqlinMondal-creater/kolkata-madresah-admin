@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import LoginPage from '@/pages/LoginPage'
 import DashboardPage from '@/pages/DashboardPage'
 import StudentsPage from '@/pages/admin/StudentsPage'
@@ -17,14 +17,17 @@ import FeePaymentInstructions from '@/pages/FeePaymentInstructions'
 import AboutUs from '@/pages/AboutUs'
 import ContactUs from '@/pages/ContactUs'
 import PrivacyPolicy from '@/pages/PrivacyPolicy'
+import NotFoundPage from '@/pages/NotFoundPage'
 import ProtectedRoute from '@/auth/ProtectedRoute'
 import StudentProtectedRoute from '@/auth/StudentProtectedRoute'
 import AdminLayout from '@/components/layout/AdminLayout'
 import StudentLayout from '@/components/layout/StudentLayout'
+import SiteLoader from '@/components/layout/SiteLoader'
 
 export default function App() {
   return (
     <BrowserRouter>
+      <SiteLoader />
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -72,7 +75,7 @@ export default function App() {
         <Route path="/about-us" element={<AboutUs />} />
         <Route path="/contact-us" element={<ContactUs />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   )
